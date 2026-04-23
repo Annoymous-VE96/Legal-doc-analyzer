@@ -1,0 +1,11 @@
+fastapi 
+uvicorn 
+chromadb
+langchain
+langchain_core
+langchain_openai
+langchain_community
+sqlalchemy
+aiosqlite
+pydantic
+bcrypt
