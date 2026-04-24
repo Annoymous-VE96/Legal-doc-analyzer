@@ -1,6 +1,10 @@
-from fastapi import FastAPI, HTTPException
-from db.user_db.schemas import Register, Login
-from db.user_db.models import User
+from fastapi import FastAPI, HTTPException, Depends
+from user_db.schemas import Register, Login
+from user_db.models import User
+from user_db.database import create_all_tables
+from user_db.database import get_async_session
+from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 import bcrypt
@@ -11,10 +15,23 @@ def hashing(password) -> bytes:
     return bcrypt.hashpw(password.encode('utf-8'), salt)
 
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await create_all_tables()   # runs on startup
+    yield                       # app runs here
+
+app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['http://localhost:3000'],
+    allow_methods=['*'],
+    allow_headers=['*']
+)
+
 
 @app.post('/register')
-async def register(details : Register, db : AsyncSession):
+async def register(details : Register, db : AsyncSession = Depends(get_async_session)):
     result = await db.execute(
         select(User).where(User.email == details.email)
     )
@@ -39,7 +56,7 @@ async def register(details : Register, db : AsyncSession):
         return {'message' : 'New user Created'}
 
 @app.post('/login')
-async def login(details : Login, db : AsyncSession):
+async def login(details : Login, db : AsyncSession = Depends(get_async_session)):
     # here checkpw() is used to extract the salt and then check only the password matches or not
     result = await db.execute(
         select(User).where(User.email == details.email)

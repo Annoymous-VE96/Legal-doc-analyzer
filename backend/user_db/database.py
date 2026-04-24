@@ -1,6 +1,6 @@
 from collections.abc import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from user_db.schemas import Base
+from user_db.models import Base
 
 DATABASE_URL = 'sqlite+aiosqlite:///./user.db' 
 engine = create_async_engine(
@@ -12,7 +12,7 @@ session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
 # To get session to interact with the DB when needed
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
-    async with session_maker as session:
+    async with session_maker() as session:
         yield session
     '''
         get_async_session() runs
@@ -30,8 +30,8 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 # Creates the table according to the schema defined in : models.py
 async def create_all_tables():
-    with engine.begin() as e:
-        await e.run_sync(Base.metadata.create_all())
+    async with engine.begin() as e:   
+        await e.run_sync(Base.metadata.create_all)
     '''
     engine : a connection pool. By default it has 5 connections
     engine.begin() : picks up a connection to use it 
