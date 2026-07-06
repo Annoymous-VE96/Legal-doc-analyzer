@@ -1,0 +1,41 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+
+# Frontend / Node
+node_modules/
+/.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Production
+frontend/build
+
+# Misc
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+backend/uploads/
+backend/vector_store/
+Test_documents/
+
+backend/*.db

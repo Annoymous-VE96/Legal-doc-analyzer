@@ -1,0 +1,306 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Lato:wght@300;400&display=swap');
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes lineGrow {
+  from { width: 0; }
+  to   { width: 60px; }
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(5px); }
+}
+
+.hero-badge    { animation: fadeUp 0.7s ease 0.1s both; }
+.hero-h1       { animation: fadeUp 0.7s ease 0.25s both; }
+.hero-sub      { animation: fadeUp 0.7s ease 0.4s both; }
+.hero-cta      { animation: fadeUp 0.7s ease 0.55s both; }
+.hero-divider  { animation: lineGrow 0.8s ease 0.65s both; }
+.hero-features { animation: fadeUp 0.7s ease 0.75s both; }
+
+/* ── Wrapper ── */
+.lp-wrapper {
+  min-height: 100vh;
+  background: #2b2b2b;
+  color: #ececec;
+  font-family: 'Lato', sans-serif;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Canvas ── */
+.lp-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Vertical lines ── */
+.lp-vline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(201, 168, 76, 0.08) 30%,
+    rgba(201, 168, 76, 0.08) 70%,
+    transparent
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+.lp-vline--left  { left: 8%; }
+.lp-vline--right { right: 8%; }
+
+/* ── Navbar ── */
+.lp-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.4rem 3rem;
+  border-bottom: 1px solid rgba(201, 168, 76, 0.1);
+  position: relative;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+}
+
+.lp-logo {
+  font-size: 1.2rem;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #c9a84c;
+}
+
+.lp-nav-actions {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+/* ── Buttons ── */
+.cta-btn {
+  background: #c9a84c;
+  border: none;
+  color: #0d0d0d;
+  padding: 0.75rem 2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Lato', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: background 0.2s, transform 0.15s;
+}
+.cta-btn:hover {
+  background: #dbbe6a;
+  transform: translateY(-1px);
+}
+
+.nav-login {
+  background: transparent;
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  color: #c9a84c;
+  padding: 0.45rem 1.2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Lato', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 300;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: border-color 0.2s, color 0.2s;
+}
+.nav-login:hover {
+  border-color: #c9a84c;
+  color: #dbbe6a;
+}
+
+/* ── Hero ── */
+.lp-hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 5rem 2rem 3rem;
+  position: relative;
+  z-index: 5;
+}
+
+.lp-badge {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #c9a84c;
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  padding: 0.35rem 1.1rem;
+  border-radius: 2px;
+  margin-bottom: 2.2rem;
+  background: rgba(201, 168, 76, 0.04);
+}
+
+.lp-heading {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(3rem, 6vw, 5.5rem);
+  font-weight: 300;
+  line-height: 1.1;
+  margin: 0 0 1.8rem;
+  color: #f0ebe0;
+  letter-spacing: -0.01em;
+}
+
+.lp-accent {
+  font-style: italic;
+  color: #c9a84c;
+  font-weight: 300;
+}
+
+.lp-subtext {
+  color: rgba(240, 235, 224, 0.5);
+  font-size: 1rem;
+  font-weight: 300;
+  line-height: 1.9;
+  letter-spacing: 0.02em;
+  margin-bottom: 2.2rem;
+}
+
+.lp-cta {
+  margin-top: 0.5rem;
+}
+
+/* ── Divider ── */
+.lp-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(201, 168, 76, 0.4), transparent);
+  margin: 2.5rem auto 2rem;
+  display: block;
+}
+
+/* ── Feature cards ── */
+.lp-features {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.2rem;
+  max-width: 1100px;
+  width: 100%;
+}
+
+.feature-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  width: 480px;
+  padding: 1.2rem 1.4rem;
+  border: 1px solid rgba(201, 168, 76, 0.15);
+  border-radius: 8px;
+  background: rgba(201, 168, 76, 0.03);
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+}
+.feature-card:hover {
+  border-color: rgba(201, 168, 76, 0.4);
+  background: rgba(201, 168, 76, 0.06);
+  transform: translateY(-4px);
+}
+
+.feature-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.feature-text-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lp-feature-title {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: #dbbe6a;
+  text-transform: uppercase;
+}
+
+.lp-feature-desc {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 300;
+  line-height: 1.5;
+  color: rgba(236, 236, 236, 0.55);
+}
+
+/* ── Scroll hint ── */
+.scroll-hint {
+  animation: fadeUp 0.7s ease 1s both;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: default;
+  margin-top: 3.5rem;
+  opacity: 0.35;
+}
+
+.scroll-label {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  color: #c9a84c;
+  text-transform: uppercase;
+}
+
+.scroll-arrow {
+  animation: bounce 1.8s ease infinite;
+  color: #c9a84c;
+  font-size: 0.9rem;
+}
+
+/* ── Quote strip ── */
+.lp-quote-strip {
+  border-top: 1px solid rgba(201, 168, 76, 0.08);
+  padding: 1.1rem 3rem;
+  text-align: center;
+  position: relative;
+  z-index: 5;
+}
+
+.lp-quote-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: rgba(201, 168, 76, 0.3);
+  letter-spacing: 0.05em;
+}
+
+/* ── Footer ── */
+.lp-footer {
+  border-top: 1px solid rgba(201, 168, 76, 0.08);
+  padding: 1rem 3rem;
+  text-align: center;
+  position: relative;
+  z-index: 5;
+}
+
+.lp-footer-text {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  color: rgba(201, 168, 76, 0.4);
+}
