@@ -1,4 +1,4 @@
-const BASE_URL = 'https://Annoymous0409-LexAI.hf.space';
+const BASE_URL = process.env.REACT_APP_API_URL;
 const getToken = () => localStorage.getItem('token');
 
 const authHeaders = () => ({
@@ -102,13 +102,30 @@ export const deleteAccount = async () => {
 
 export const renameChat = async (chatId, name) => {
   const token = localStorage.getItem('token');
-  const res = await fetch(`https://Annoymous0409-LexAI.hf.space/chats/${chatId}/rename`, {
+  const res = await fetch(`${BASE_URL}/chats/${chatId}/rename`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ name}),
+  });
+  if (!res.ok) throw await res.json();
+  return res.json();
+};
+
+export const analyzeDocument = async (chatId) => {
+  const res = await fetch(`${BASE_URL}/chats/${chatId}/analyze`, {
+    method: 'POST',
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw await res.json();
+  return res.json();
+};
+
+export const getAnalysis = async (chatId) => {
+  const res = await fetch(`${BASE_URL}/chats/${chatId}/analyze`, {
+    headers: authHeaders(),
   });
   if (!res.ok) throw await res.json();
   return res.json();

@@ -1,13 +1,16 @@
 from collections.abc import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from db.models import Base
+from dotenv import load_dotenv
 import os
+
+load_dotenv()
 
 DATABASE_URL = os.environ["DATABASE_URL"]
 engine = create_async_engine(
     DATABASE_URL,
     pool_size=6, # number of connections in pool
-    max_overflow=10, # extra connections allowed beyonnd pool_size if all 6 are busy,
+    max_overflow=10, # extra connections allowed beyond pool_size if all 6 are busy,
     pool_pre_ping=True,
     pool_recycle=300
 )

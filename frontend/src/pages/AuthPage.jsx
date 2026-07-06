@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './AuthPage.css';
 
+const BASE_URL = process.env.REACT_APP_API_URL;
+console.log("BASE_URL =", BASE_URL);
+
 function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,8 +25,8 @@ function AuthPage() {
   const handleSubmit = async () => {
     setMessage('');
     const url = mode === 'login'
-      ? 'https://Annoymous0409-LexAI.hf.space/login'
-      : 'https://Annoymous0409-LexAI.hf.space/register';
+      ? `${BASE_URL}/login`
+      : `${BASE_URL}/register`;
 
     const body = mode === 'login'
       ? { email, password }

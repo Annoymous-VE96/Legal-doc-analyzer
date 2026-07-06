@@ -1,6 +1,7 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import Integer, String, DateTime, ForeignKey, Enum
+from sqlalchemy import Integer, String, DateTime, ForeignKey, Text
 from datetime import datetime
+from pgvector.sqlalchemy import Vector
 
 class Base(DeclarativeBase):
     pass
@@ -21,6 +22,7 @@ class Chat(Base):
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey('User.id'), nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=False)
     pdf_path: Mapped[str] = mapped_column(String, nullable=False)
+    page_offset: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
 class Messages(Base):
@@ -31,3 +33,23 @@ class Messages(Base):
     role: Mapped[str] = mapped_column(String, nullable=False)  
     content: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+class Analysis(Base):
+    __tablename__ = 'Analysis'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    chat_id: Mapped[int] = mapped_column(Integer, ForeignKey('Chat.id'), nullable=False, unique=True)
+    clauses: Mapped[str] = mapped_column(Text, nullable=False) # JSON String
+    risks: Mapped[str] = mapped_column(Text, nullable=False) # JSON String
+    summary: Mapped[str] = mapped_column(Text, nullable=False)
+    improvements: Mapped[str] = mapped_column(Text, nullable=False) # JSON String
+    created_at: Mapped[str] = mapped_column(DateTime, default=datetime.now)
+
+class Chunk(Base):
+    __tablename__ = 'Chunk'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    chat_id: Mapped[int] = mapped_column(Integer, ForeignKey('Chat.id'), nullable=False)
+    content: Mapped[str] = mapped_column(String, nullable=False)
+    page: Mapped[int] = mapped_column(Integer, nullable=True)
+    embedding: Mapped[list] = mapped_column(Vector(384))  # MiniLM = 384 dims

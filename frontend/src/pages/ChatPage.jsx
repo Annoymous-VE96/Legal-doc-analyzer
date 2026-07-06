@@ -6,6 +6,8 @@ import PDFViewer from '../components/PDFViewer';
 import ChatPanel from '../components/ChatPanel';
 import './ChatPage.css';
 
+const BASE_URL = process.env.REACT_APP_API_URL;
+
 export default function ChatPage() {
   const navigate = useNavigate();
   const fileRef = useRef();
@@ -70,7 +72,7 @@ export default function ChatPage() {
   const handleSend = async (overrideText) => {
     const userText = typeof overrideText === 'string' ? overrideText : input;
     if (!userText.trim() || !activeChatId || loading) return;
-      setInput('');
+    setInput('');
 
     setActiveChat((prev) => ({
       ...prev,
@@ -84,7 +86,7 @@ export default function ChatPage() {
     setLoading(true);
     try {
       const authToken = localStorage.getItem('token');
-      const res = await fetch(`https://Annoymous0409-LexAI.hf.space/chats/${activeChatId}/messages`, {
+      const res = await fetch(`${BASE_URL}/chats/${activeChatId}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -118,7 +120,6 @@ export default function ChatPage() {
         }
       }
 
-      // ✅ Force re-render after stream completes
       setActiveChat((prev) => ({ ...prev, messages: [...prev.messages] }));
 
     } catch (err) {
@@ -223,6 +224,7 @@ export default function ChatPage() {
               loading={loading}
               onInputChange={setInput}
               onSend={handleSend}
+              chatId={activeChatId}
             />
           </div>
         )}

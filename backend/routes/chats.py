@@ -1,14 +1,17 @@
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.schemas import RenameChat
-from db.models import User, Chat, Messages
+from db.schemas import RenameChat, AnalysisResponse
+from db.models import User, Chat, Messages, Analysis, Chunk
 from db.database import get_async_session
 from auth.dependencies import get_current_user
 from core.crag import CRAGPipeline
-import shutil
+from core.storage import upload_file, get_public_url, delete_file
 import asyncio
 import os
+import json
+import tempfile
+import shutil
 
 router = APIRouter()
 
@@ -19,27 +22,27 @@ async def upload_chat(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session)
 ):
-    file_dir = f"uploads/{current_user.id}"
-    os.makedirs(file_dir, exist_ok=True)
+    # upload file to supabase
+    key = f"{current_user.id}/{file.filename}"
+    upload_file(file.file, key)
 
-    file_path = f"{file_dir}/{file.filename}"
-    with open(file_path, "wb") as f:
-        shutil.copyfileobj(file.file, f)
-
-    new_chat = Chat(user_id=current_user.id, name=file.filename, pdf_path=file_path)
+    # create a new Chat
+    new_chat = Chat(user_id=current_user.id, name=file.filename, pdf_path=key)
     db.add(new_chat)
     await db.commit()
     await db.refresh(new_chat)
 
+    # Run to immediately create embeddings + save them
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(
         None,
         lambda: CRAGPipeline(
-            pdf_path=file_path,
+            pdf_path=key,
             filename=file.filename,
-            vector_store_dir=f'vector_store/{new_chat.id}'
+            chat_id=new_chat.id
         )
     )
+
     return new_chat
 
 
@@ -50,8 +53,8 @@ async def history(
 ):
     result = await db.execute(select(Chat).where(Chat.user_id == current_user.id))
     return {
-        'chats' : result.scalars().all(),
-        'username' : current_user.name
+        'chats': result.scalars().all(),
+        'username': current_user.name
     }
 
 
@@ -65,20 +68,15 @@ async def delete_chat(
     chat = result.scalar_one_or_none()
     if not chat:
         raise HTTPException(status_code=404, detail='Chat not found')
+    
+    # Delete the file from Supabase
+    if chat.pdf_path:
+        delete_file(chat.pdf_path)
 
-    # Delete vector store
-    vector_store_path = f"vector_store/{chat_id}"
-    if os.path.exists(vector_store_path):
-        shutil.rmtree(vector_store_path)
-
-    # Delete uploaded PDF  ← chat.pdf_path not Chat.pdf_path
-    if chat.pdf_path and os.path.exists(chat.pdf_path):
-        os.remove(chat.pdf_path)
-
-    # Delete messages
+    # Delete Chat + embeddings + messages
+    await db.execute(delete(Chunk).where(Chunk.chat_id == chat_id))
     await db.execute(delete(Messages).where(Messages.chat_id == chat_id))
-
-    # Delete chat
+    await db.execute(delete(Chunk).where(Chunk.chat_id == chat_id))
     await db.delete(chat)
     await db.commit()
 
@@ -92,22 +90,19 @@ async def delete_all_chat(
 ):
     chats = await db.execute(select(Chat).where(Chat.user_id == current_user.id))
     chats = chats.scalars().all()
-
-    for chat in chats:
-        vector_store_path = f"vector_store/{chat.id}"
-        if os.path.exists(vector_store_path):
-            shutil.rmtree(vector_store_path)
-
     chat_ids = [chat.id for chat in chats]
 
-    await db.execute(delete(Messages).where(Messages.chat_id.in_(chat_ids)))  
+    # Delete files from supabase 
+    for chat in chats:
+        if chat.pdf_path:
+            delete_file(chat.pdf_path)
+
+    # Delete Chat + Messages + Chunk
+    await db.execute(delete(Chunk).where(Chunk.chat_id.in_(chat_ids)))
+    await db.execute(delete(Messages).where(Messages.chat_id.in_(chat_ids)))
     await db.execute(delete(Chat).where(Chat.user_id == current_user.id))
+    await db.commit()
 
-    upload_store_path = f"uploads/{current_user.id}"
-    if os.path.exists(upload_store_path):
-        shutil.rmtree(upload_store_path)
-
-    await db.commit()  
     return {'message': 'All chats deleted'}
 
 
@@ -127,3 +122,75 @@ async def rename_chat(
     await db.refresh(chat)
     return {'message': 'Rename Done'}
 
+
+@router.post('/chats/{chat_id}/analyze', response_model=AnalysisResponse)
+async def analyze_chat(
+    chat_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_session)
+):
+    chat_row = await db.execute(select(Chat).where(Chat.id == chat_id))
+    chat_row = chat_row.scalar_one_or_none()
+    if not chat_row:
+        raise HTTPException(status_code=404, detail='Chat not found')
+
+    existing = await db.execute(select(Analysis).where(Analysis.chat_id == chat_id))
+    existing = existing.scalar_one_or_none()
+    if existing:
+        return AnalysisResponse(
+            chat_id=chat_id,
+            clauses=json.loads(existing.clauses),
+            risks=json.loads(existing.risks),
+            summary=existing.summary,
+            improvements=json.loads(existing.improvements),
+        )
+
+    # Vector store already built on upload — no need to re-download PDF,
+    # pass a dummy path since CRAGPipeline only needs it if chunks are missing
+    loop = asyncio.get_event_loop()
+    pipeline = await loop.run_in_executor(
+        None,
+        lambda: CRAGPipeline(
+            pdf_path=chat_row.pdf_path,  # only used if Chunk table is empty (edge case)
+            filename=chat_row.name,
+            chat_id=chat_id
+        )
+    )
+    result = await loop.run_in_executor(None, pipeline.analyze_document)
+
+    analysis = Analysis(
+        chat_id=chat_id,
+        clauses=json.dumps([c.model_dump() for c in result.clauses]),
+        risks=json.dumps([r.model_dump() for r in result.risks]),
+        summary=result.summary,
+        improvements=json.dumps(result.improvements),
+    )
+    db.add(analysis)
+    await db.commit()
+
+    return AnalysisResponse(
+        chat_id=chat_id,
+        clauses=result.clauses,
+        risks=result.risks,
+        summary=result.summary,
+        improvements=result.improvements,
+    )
+
+
+@router.get('/chats/{chat_id}/analyze', response_model=AnalysisResponse)
+async def get_analysis(
+    chat_id: int,
+    db: AsyncSession = Depends(get_async_session)
+):
+    result = await db.execute(select(Analysis).where(Analysis.chat_id == chat_id))
+    analysis = result.scalar_one_or_none()
+    if not analysis:
+        raise HTTPException(status_code=404, detail='No analysis yet')
+
+    return AnalysisResponse(
+        chat_id=chat_id,
+        clauses=json.loads(analysis.clauses),
+        risks=json.loads(analysis.risks),
+        summary=analysis.summary,
+        improvements=json.loads(analysis.improvements),
+    )

@@ -64,3 +64,7 @@
 .ai-msg strong { font-weight: bold; color: #f0f0f0; }
 .ai-msg h1, .ai-msg h2, .ai-msg h3 { color: #c9a84c; margin: 0.6rem 0 0.3rem; }
 .ai-msg code { background: #333; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.85rem; }
+
+.tab-bar { display: flex; border-bottom: 1px solid #2e2e2e; }
+.tab { flex: 1; padding: 0.6rem; background: transparent; border: none; color: #999; cursor: pointer; font-family: Georgia, serif; }
+.tab.active { color: #c9a84c; border-bottom: 2px solid #c9a84c; }

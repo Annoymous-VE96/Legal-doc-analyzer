@@ -7,6 +7,7 @@ from db.models import User, Chat, Messages
 from db.database import get_async_session
 from auth.dependencies import get_current_user
 from core.crag import CRAGPipeline
+from core.storage import get_signed_url
 import asyncio
 
 router = APIRouter()
@@ -19,16 +20,13 @@ async def send_message(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session)
 ):
-    # Save user message
     user_msg = Messages(chat_id=chat_id, role='user', content=query.content)
     db.add(user_msg)
     await db.commit()
 
-    # Load chat metadata
     chat_row = await db.execute(select(Chat).where(Chat.id == chat_id))
     chat_row = chat_row.scalar_one_or_none()
 
-    # Load chat history (oldest → newest)
     history_rows = await db.execute(
         select(Messages).where(Messages.chat_id == chat_id).order_by(Messages.id.desc())
     )
@@ -38,19 +36,19 @@ async def send_message(
         for m in history
     ]
 
-    # Run CRAG pipeline
-    crag_pipeline = CRAGPipeline(
-        pdf_path=chat_row.pdf_path,
-        filename=chat_row.name,
-        vector_store_dir=f'vector_store/{chat_id}'
-    )
-
     loop = asyncio.get_event_loop()
+    crag_pipeline = await loop.run_in_executor(
+        None,
+        lambda: CRAGPipeline(
+            pdf_path=chat_row.pdf_path,  # only used if Chunk table empty
+            filename=chat_row.name,
+            chat_id=chat_id
+        )
+    )
     crag_result = await loop.run_in_executor(None, crag_pipeline.run, query.content, chat_history)
 
-    # Extract both refined_context AND verdict
     refined_context = crag_result.get('refined_context', '')
-    verdict = crag_result.get('verdict', 'CORRECT')  # fallback to CORRECT if missing
+    verdict = crag_result.get('verdict', 'CORRECT')
 
     full_answer = []
 
@@ -58,7 +56,7 @@ async def send_message(
         prompt_msgs = crag_pipeline.answer_prompt.format_messages(
             question=query.content,
             refined_context=refined_context,
-            verdict=verdict,              # ← now passed to the LLM
+            verdict=verdict,
             chat_history=chat_history
         )
 
@@ -68,7 +66,6 @@ async def send_message(
                 yield f"data: {chunk.content}\n\n"
                 await asyncio.sleep(0.1)
 
-        # Save AI response
         complete = "".join(full_answer)
         ai_msg = Messages(chat_id=chat_id, role='AI', content=complete)
         db.add(ai_msg)
@@ -98,6 +95,6 @@ async def get_messages(
     chat = chat.scalar_one_or_none()
 
     return {
-        'pdf_path': f'https://Annoymous0409-LexAI.hf.space/{chat.pdf_path}' if chat else None,
+        'pdf_path': get_signed_url(chat.pdf_path) if chat else None,
         'messages': [{'role': m.role, 'message': m.content} for m in messages]
     }
