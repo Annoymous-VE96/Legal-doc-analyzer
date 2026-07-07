@@ -24,8 +24,11 @@ from pathlib import Path
 load_dotenv(Path(__file__).parent.parent / ".env", override=True)
 
 _embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-sync_engine = create_engine(os.environ["DATABASE_URL"].replace("+asyncpg", ""))
-
+sync_engine = create_engine(
+    os.environ["DATABASE_URL"]
+    .replace("+asyncpg", "")
+    .replace("ssl=require", "sslmode=require")
+)
 
 class State(TypedDict, total=False):
     question: str
@@ -65,7 +68,7 @@ class CRAGPipeline:
     def __init__(
         self,
         pdf_path: str,
-        filename: str,
+        filename: str | None,
         chat_id: int,
         chunk_size: int = 900,
         chunk_overlap: int = 100,
@@ -125,9 +128,9 @@ class CRAGPipeline:
     def chunk_documents(self) -> List[Document]:
         self.chunks = self.splitter.split_documents(self.docs)
         for chunk in self.chunks:
+            chunk.page_content = chunk.page_content.replace("\x00", "")
             chunk.metadata["source"] = self.filename
         return self.chunks
-
 
     # ─────────────────────────────────────────
     # pgvector storage

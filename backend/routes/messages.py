@@ -7,7 +7,7 @@ from db.models import User, Chat, Messages
 from db.database import get_async_session
 from auth.dependencies import get_current_user
 from core.crag import CRAGPipeline
-from core.storage import get_signed_url
+from core.storage import get_public_url
 import asyncio
 
 router = APIRouter()
@@ -95,6 +95,6 @@ async def get_messages(
     chat = chat.scalar_one_or_none()
 
     return {
-        'pdf_path': get_signed_url(chat.pdf_path) if chat else None,
+        'pdf_path': get_public_url(chat.pdf_path) if chat else None,
         'messages': [{'role': m.role, 'message': m.content} for m in messages]
     }

@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr, field_validator
+from datetime import datetime
 from typing import List
 from enum import Enum
 
@@ -10,6 +11,14 @@ class Register(BaseModel):
 class Login(BaseModel):
     email : EmailStr
     password : str
+
+class NewChat(BaseModel):
+    id: int 
+    user_id: int
+    name: str
+    pdf_path: str 
+    page_offset: int
+    created_at: datetime
 
 class MessageCreate(BaseModel):
     content : str
