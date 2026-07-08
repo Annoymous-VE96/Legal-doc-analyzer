@@ -19,7 +19,6 @@ export default function ChatPage() {
   const [activeChat, setActiveChat] = useState(null);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [historyLoading, setHistoryLoading] = useState(true);
 
   useEffect(() => {
     fetchHistory()
@@ -27,8 +26,7 @@ export default function ChatPage() {
         setChats(data.chats);
         setUsername(data.username);
       })
-      .catch(() => navigate('/'))
-      .finally(() => setHistoryLoading(false));
+      .catch(() => navigate('/'));
   }, [navigate]);
 
   const handleSelectChat = async (chat) => {
@@ -196,14 +194,6 @@ export default function ChatPage() {
       alert('Rename failed: ' + (err.detail || 'Unknown error'));
     }
   };
-
-  if (historyLoading) {
-    return (
-      <div className="page-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p>Loading your workspace...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="page-wrapper">

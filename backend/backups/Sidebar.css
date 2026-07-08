@@ -96,75 +96,20 @@
 }
 .sidebar-chat-item.active .chat-name { color: #f0f0f0; }
 
-/* ── Three-dot menu button (replaces old delete/rename buttons) ── */
-.chat-item-menu {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.chat-menu-btn {
-  background: transparent;
-  border: none;
-  color: #999;
-  font-size: 1rem;
-  cursor: pointer;
-  padding: 0.15rem 0.4rem;
-  border-radius: 4px;
-  opacity: 0;
-  transition: opacity 0.15s, background 0.15s, color 0.15s;
-  line-height: 1;
-}
-.sidebar-chat-item:hover .chat-menu-btn { opacity: 1; }
-.chat-menu-btn:hover { background: #3a3a3a; color: #fff; }
-
-/* Keep menu button visible while its dropdown is open, even without hover */
-.chat-item-dropdown ~ .chat-menu-btn,
-.chat-item-menu:has(.chat-item-dropdown) .chat-menu-btn {
-  opacity: 1;
-}
-
-.chat-item-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  background: #252527;
-  border: 1px solid #3a3a3a;
-  border-radius: 8px;
-  overflow: hidden;
-  min-width: 140px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-  z-index: 200;
-}
-
-.chat-item-dropdown button {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid #2e2e2e;
-  color: #ddd;
-  padding: 0.6rem 0.8rem;
-  text-align: left;
-  cursor: pointer;
-  font-family: 'Georgia', serif;
-  font-size: 0.82rem;
-  transition: background 0.15s, color 0.15s;
-}
-.chat-item-dropdown button:last-child { border-bottom: none; }
-.chat-item-dropdown button:hover { background: #2e2e30; color: #fff; }
-.chat-item-dropdown .chat-item-delete-option:hover { color: #e88; }
-
-.chat-rename-input {
-  flex: 1;
-  background: #2a2a2d;
+/* ✕ delete button — always visible with good contrast */
+.chat-delete-btn {
+  background: #3a3a3a;
   border: 1px solid #555;
-  color: #f0f0f0;
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 0.85rem;
+  color: #ccc;
+  font-size: 0.7rem;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
 }
+.sidebar-chat-item:hover .chat-delete-btn { opacity: 1; }
+.chat-delete-btn:hover { background: #c0392b; border-color: #c0392b; color: #fff; }
 
 .sidebar-bottom {
   padding: 0.8rem;
@@ -240,6 +185,26 @@
   font-size: 0.85rem;
   transition: background 0.15s, color 0.15s;
 }
+
+.chat-rename-input {
+  flex: 1;
+  background: #2a2a2d;
+  border: 1px solid #555;
+  color: #f0f0f0;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.85rem;
+}
+
+.chat-rename-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0 2px;
+  opacity: 0.7;
+}
+.chat-rename-btn:hover { opacity: 1; }
 .user-floating-menu button:last-child { border-bottom: none; }
 .user-floating-menu button:hover { background: #2e2e30; color: #fff; }
 .user-floating-menu .logout-option:hover { color: #e88; }

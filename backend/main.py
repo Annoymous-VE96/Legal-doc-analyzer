@@ -29,3 +29,10 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(chats.router)
 app.include_router(messages.router)
+
+@app.get("/", response_model=dict, status_code=200)
+async def root():
+    return {
+        "message": "Welcome to the API",
+        "status": "running"
+    }

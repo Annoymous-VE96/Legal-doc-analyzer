@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { fetchHistory } from '../api/api';
 import './AuthPage.css';
+
+const BASE_URL = process.env.REACT_APP_API_URL;
+console.log("BASE_URL =", BASE_URL);
 
 function AuthPage() {
   const navigate = useNavigate();
@@ -23,8 +25,8 @@ function AuthPage() {
   const handleSubmit = async () => {
     setMessage('');
     const url = mode === 'login'
-      ? `${process.env.REACT_APP_API_URL}/login`
-      : `${process.env.REACT_APP_API_URL}/register`;
+      ? `${BASE_URL}/login`
+      : `${BASE_URL}/register`;
 
     const body = mode === 'login'
       ? { email, password }
@@ -41,11 +43,6 @@ function AuthPage() {
 
       if (response.ok) {
         localStorage.setItem('token', data.access_token);
-
-        // Warm up / prefetch chat history before navigating,
-        // so ChatPage mounts with data already in flight or cached.
-        await fetchHistory().catch(() => {});
-
         navigate('/chat');
       } else {
         setMessage(data.detail || 'Something went wrong. Please try again.');

@@ -64,7 +64,7 @@ async def send_message(
             if chunk.content:
                 full_answer.append(chunk.content)
                 yield f"data: {chunk.content}\n\n"
-                await asyncio.sleep(0.1)
+                # await asyncio.sleep(0.02)
 
         complete = "".join(full_answer)
         ai_msg = Messages(chat_id=chat_id, role='AI', content=complete)

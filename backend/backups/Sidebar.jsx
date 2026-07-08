@@ -4,30 +4,15 @@ import './Sidebar.css';
 function ChatItem({ chat, isActive, onSelect, onDelete, onRename }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(chat.name);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const itemMenuRef = useRef();
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handler = (e) => {
-      if (itemMenuRef.current && !itemMenuRef.current.contains(e.target)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [menuOpen]);
-
-  const startRename = (e) => {
+  const handleRename = (e) => {
     e.stopPropagation();
-    setEditing(true);
-    setMenuOpen(false);
-  };
-
-  const confirmRename = (e) => {
-    e.stopPropagation();
-    if (name.trim() && name !== chat.name) onRename(chat.id, name.trim());
-    setEditing(false);
+    if (editing) {
+      if (name.trim() && name !== chat.name) onRename(chat.id, name.trim());
+      setEditing(false);
+    } else {
+      setEditing(true);
+    }
   };
 
   return (
@@ -45,40 +30,22 @@ function ChatItem({ chat, isActive, onSelect, onDelete, onRename }) {
           onClick={(e) => e.stopPropagation()}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') confirmRename(e);
+            if (e.key === 'Enter') handleRename(e);
             if (e.key === 'Escape') { setEditing(false); setName(chat.name); }
           }}
-          onBlur={confirmRename}
         />
       ) : (
         <span className="chat-name">{chat.name}</span>
       )}
 
-      {!editing && (
-        <div className="chat-item-menu" ref={itemMenuRef}>
-          <button
-            className="chat-menu-btn"
-            onClick={(e) => { e.stopPropagation(); setMenuOpen((p) => !p); }}
-            title="More options"
-          >
-            ⋯
-          </button>
-
-          {menuOpen && (
-            <div className="chat-item-dropdown">
-              <button onClick={startRename}>
-                ✏️ Rename
-              </button>
-              <button
-                className="chat-item-delete-option"
-                onClick={(e) => { e.stopPropagation(); onDelete(chat.id); setMenuOpen(false); }}
-              >
-                🗑️ Delete
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+      <button className="chat-rename-btn" onClick={handleRename} title={editing ? 'Save' : 'Rename'}>
+        {editing ? '✓' : '✏️'}
+      </button>
+      <button
+        className="chat-delete-btn"
+        onClick={(e) => { e.stopPropagation(); onDelete(chat.id); }}
+        title="Delete"
+      >✕</button>
     </div>
   );
 }

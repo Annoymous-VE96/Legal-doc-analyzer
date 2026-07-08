@@ -12,6 +12,7 @@ export default function PDFViewer({ pdfUrl, chatName, onChangePdf, onAutoSend, o
   const [numPages, setNumPages] = useState(null);
   const [scale, setScale] = useState(1.2);
   const [toolbar, setToolbar] = useState(null);
+  const [highlights, setHighlights] = useState([]);
   const containerRef = useRef();
 
   const handleTextSelection = useCallback(() => {
@@ -36,58 +37,52 @@ export default function PDFViewer({ pdfUrl, chatName, onChangePdf, onAutoSend, o
     return () => document.removeEventListener('mouseup', handleTextSelection);
   }, [handleTextSelection]);
 
+  // Apply highlights to text layer spans
+  useEffect(() => {
+    if (!highlights.length) return;
+    const timer = setTimeout(() => {
+      const textLayers = containerRef.current?.querySelectorAll('.react-pdf__Page__textContent');
+      textLayers?.forEach((textLayer) => {
+        const spans = textLayer.querySelectorAll('span');
+        spans.forEach((span) => {
+          const spanText = span.textContent.trim();
+          if (!spanText) return;
+          const match = highlights.find(
+            (h) => spanText.includes(h.text) || h.text.includes(spanText)
+          );
+          if (match) {
+            span.style.backgroundColor = match.color;
+            span.style.borderRadius = '2px';
+          }
+        });
+      });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [highlights, numPages]);
+
   const closeToolbar = () => {
     setToolbar(null);
     window.getSelection()?.removeAllRanges();
   };
 
-  // Wraps only the exact selected text — walks every text node touched by
-  // the selection range and wraps just the in-range portion of each one.
-  // This avoids the old bug where loose substring matching bled highlight
-  // color into unrelated spans/rows.
   const handleHighlight = (color) => {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) { closeToolbar(); return; }
 
     const range = selection.getRangeAt(0);
 
-    const walker = document.createTreeWalker(
-      range.commonAncestorContainer,
-      NodeFilter.SHOW_TEXT,
-      {
-        acceptNode: (node) =>
-          range.intersectsNode(node)
-            ? NodeFilter.FILTER_ACCEPT
-            : NodeFilter.FILTER_REJECT,
-      }
-    );
-
-    const textNodes = [];
-    let node;
-    while ((node = walker.nextNode())) textNodes.push(node);
-
-    textNodes.forEach((textNode) => {
-      const start = textNode === range.startContainer ? range.startOffset : 0;
-      const end = textNode === range.endContainer ? range.endOffset : textNode.length;
-
-      if (start >= end) return; // nothing selected in this node
-
-      const nodeRange = document.createRange();
-      nodeRange.setStart(textNode, start);
-      nodeRange.setEnd(textNode, end);
-
+    try {
       const span = document.createElement('span');
       span.style.backgroundColor = color;
       span.style.borderRadius = '2px';
+      range.surroundContents(span); // wraps only the exact selected text
+    } catch (err) {
+      // surroundContents fails if selection spans multiple text nodes/elements —
+      // fall back to per-node wrapping
+      const nodes = range.cloneContents().childNodes;
+      console.warn('Could not highlight cleanly (multi-node selection):', err);
+    }
 
-      try {
-        nodeRange.surroundContents(span);
-      } catch (err) {
-        // Skip nodes that can't be wrapped cleanly (rare edge case)
-      }
-    });
-
-    selection.removeAllRanges();
     closeToolbar();
   };
 

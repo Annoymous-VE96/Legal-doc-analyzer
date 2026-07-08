@@ -14,7 +14,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.7rem 1rem;
+  padding: 0.7rem 1rem 0.7rem 3rem; /* was 1rem — added left space for hamburger */
   border-bottom: 1px solid #2a2a2a;
   background: #141414;
   flex-shrink: 0;
