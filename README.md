@@ -2,6 +2,8 @@
 
 Chat with your legal documents. Upload a PDF (contract, filing, agreement) and ask questions — answers are grounded in the document, with automatic web-search fallback when the document doesn't have the answer.
 
+# Public Link : https://lexaifrontend-1nqsnignu-sandipan-sarkar-s-projects.vercel.app
+
 ## What it does
 
 - **Upload & Parse** — Drop in a PDF, it's chunked and embedded automatically.

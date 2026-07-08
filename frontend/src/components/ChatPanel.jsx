@@ -43,10 +43,24 @@ export default function ChatPanel({ messages, input, loading, onInputChange, onS
         <>
           <div className="messages">
             {messages.map((msg, i) => {
-              const isStreaming = msg.role === 'ai' && i === messages.length - 1 && loading;
+              const isLast = i === messages.length - 1;
+              const isThinking = msg.role === 'ai' && isLast && loading && msg.text === '';
+              const isStreaming = msg.role === 'ai' && isLast && loading && msg.text !== '';
+
               return (
-                <div key={`${i}-${msg.text.length}`} className={`${msg.role === 'user' ? 'user-msg' : 'ai-msg'} ${isStreaming ? 'streaming' : ''}`}>
-                  {msg.role === 'ai' ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown> : msg.text}
+                <div
+                  key={`${i}-${msg.text.length}`}
+                  className={`${msg.role === 'user' ? 'user-msg' : 'ai-msg'} ${isStreaming ? 'streaming' : ''}`}
+                >
+                  {isThinking ? (
+                    <div className="typing-dots">
+                      <span></span><span></span><span></span>
+                    </div>
+                  ) : msg.role === 'ai' ? (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
+                  ) : (
+                    msg.text
+                  )}
                 </div>
               );
             })}

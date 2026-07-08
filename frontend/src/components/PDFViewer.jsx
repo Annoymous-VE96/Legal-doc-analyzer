@@ -4,7 +4,11 @@ import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import './PDFViewer.css';
 
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+// pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 const COLORS = ['#FACC15', '#86EFAC', '#93C5FD', '#F9A8D4', '#FCA5A5'];
 
