@@ -130,3 +130,12 @@ export const getAnalysis = async (chatId) => {
   if (!res.ok) throw await res.json();
   return res.json();
 };
+
+export const togglePinChat = async (chatId) => {
+  const res = await fetch(`${BASE_URL}/chats/${chatId}/pin`, {
+    method: 'PATCH',
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw await res.json();
+  return res.json(); // returns { pinned: true/false }
+};

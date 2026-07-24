@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { uploadPDF, fetchHistory, fetchMessages, logoutUser, deleteChat, deleteAllChats, renameChat, deleteAccount } from '../api/api';
+import { uploadPDF, fetchHistory, fetchMessages, logoutUser, deleteChat, deleteAllChats, renameChat, deleteAccount, togglePinChat } from '../api/api';
 import Sidebar from '../components/Sidebar';
 import PDFViewer from '../components/PDFViewer';
 import ChatPanel from '../components/ChatPanel';
@@ -53,21 +53,29 @@ export default function ChatPage() {
     const file = e.target.files[0];
     if (!file) return;
     e.target.value = '';
-    setLoading(true);
+
+    // Create client-side object URL instantly (0ms delay)
+    const clientPdfUrl = URL.createObjectURL(file);
+    const tempId = 'temp_' + Date.now();
+
+    // Optimistically show the workspace immediately
+    setActiveChatId(tempId);
+    setActiveChat({
+      id: tempId,
+      name: file.name,
+      pdfUrl: clientPdfUrl,
+      messages: [{ role: 'ai', text: `Document "${file.name}" uploaded. Ask me anything about it!` }],
+    });
+
     try {
       const newChat = await uploadPDF(file);
       setChats((prev) => [newChat, ...prev]);
       setActiveChatId(newChat.id);
-      setActiveChat({
-        id: newChat.id,
-        name: newChat.name,
-        pdfUrl: URL.createObjectURL(file),
-        messages: [{ role: 'ai', text: `Document "${file.name}" uploaded. Ask me anything about it!` }],
-      });
+      setActiveChat((prev) => (prev && prev.id === tempId ? { ...prev, id: newChat.id } : prev));
     } catch (err) {
       alert('Upload failed: ' + (err.detail || 'Unknown error'));
-    } finally {
-      setLoading(false);
+      setActiveChat(null);
+      setActiveChatId(null);
     }
   };
 
@@ -197,13 +205,24 @@ export default function ChatPage() {
     }
   };
 
-  if (historyLoading) {
-    return (
-      <div className="page-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p>Loading your workspace...</p>
-      </div>
+  const handleTogglePinChat = async (chatId) => {
+    // Instant optimistic UI update
+    setChats((prev) =>
+      prev.map((c) => (c.id === chatId ? { ...c, pinned: !c.pinned } : c))
     );
-  }
+    try {
+      const res = await togglePinChat(chatId);
+      setChats((prev) =>
+        prev.map((c) => (c.id === chatId ? { ...c, pinned: Boolean(res.pinned) } : c))
+      );
+    } catch (err) {
+      // Revert state if backend request fails
+      setChats((prev) =>
+        prev.map((c) => (c.id === chatId ? { ...c, pinned: !c.pinned } : c))
+      );
+      alert('Failed to pin/unpin chat: ' + (err.detail || 'Unknown error'));
+    }
+  };
 
   return (
     <div className="page-wrapper">
@@ -212,11 +231,13 @@ export default function ChatPage() {
           chats={chats}
           activeChatId={activeChatId}
           username={username}
+          historyLoading={historyLoading}
           onSelectChat={handleSelectChat}
           onNewChat={() => { setActiveChatId(null); setActiveChat(null); fileRef.current.click(); }}
           onLogout={() => { logoutUser(); navigate('/'); }}
           onDeleteChat={handleDeleteChat}
           onRenameChat={handleRenameChat}
+          onTogglePinChat={handleTogglePinChat}
           onDeleteAllChats={handleDeleteAllChats}
           onDeleteAccount={handleDeleteAccount}
           onClose={() => setSidebarOpen(false)}

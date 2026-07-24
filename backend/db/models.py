@@ -1,5 +1,5 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import Integer, String, DateTime, ForeignKey, Text
+from sqlalchemy import Integer, String, DateTime, ForeignKey, Text, Boolean
 from datetime import datetime
 from pgvector.sqlalchemy import Vector
 
@@ -24,7 +24,8 @@ class Chat(Base):
     pdf_path: Mapped[str] = mapped_column(String, nullable=False)
     page_offset: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
-
+    pinned: Mapped[bool] = mapped_column(Boolean, default=False)
+    
 class Messages(Base):
     __tablename__ = 'Messages'
 

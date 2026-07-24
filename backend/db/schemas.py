@@ -19,6 +19,7 @@ class NewChat(BaseModel):
     pdf_path: str 
     page_offset: int
     created_at: datetime
+    pinned: bool = False
 
 class MessageCreate(BaseModel):
     content : str

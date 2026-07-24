@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { fetchHistory } from '../api/api';
 import './AuthPage.css';
 
 function AuthPage() {
@@ -41,11 +40,6 @@ function AuthPage() {
 
       if (response.ok) {
         localStorage.setItem('token', data.access_token);
-
-        // Warm up / prefetch chat history before navigating,
-        // so ChatPage mounts with data already in flight or cached.
-        await fetchHistory().catch(() => {});
-
         navigate('/chat');
       } else {
         setMessage(data.detail || 'Something went wrong. Please try again.');

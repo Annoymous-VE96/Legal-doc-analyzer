@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './Sidebar.css';
 
-function ChatItem({ chat, isActive, onSelect, onDelete, onRename }) {
+function ChatItem({ chat, isActive, onSelect, onDelete, onRename, onTogglePin }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(chat.name);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -35,7 +35,7 @@ function ChatItem({ chat, isActive, onSelect, onDelete, onRename }) {
       className={`sidebar-chat-item ${isActive ? 'active' : ''}`}
       onClick={() => !editing && onSelect(chat)}
     >
-      <span className="chat-icon">📄</span>
+      <span className="chat-icon">{chat.pinned ? '📌' : '📄'}</span>
 
       {editing ? (
         <input
@@ -66,6 +66,15 @@ function ChatItem({ chat, isActive, onSelect, onDelete, onRename }) {
 
           {menuOpen && (
             <div className="chat-item-dropdown">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onTogglePin(chat.id);
+                  setMenuOpen(false);
+                }}
+              >
+                {chat.pinned ? '📍 Unpin' : '📌 Pin'}
+              </button>
               <button onClick={startRename}>
                 ✏️ Rename
               </button>
@@ -87,16 +96,19 @@ export default function Sidebar({
   chats,
   activeChatId,
   username,
+  historyLoading = false,
   onSelectChat,
   onNewChat,
   onLogout,
   onDeleteChat,
   onRenameChat,
+  onTogglePinChat,
   onDeleteAllChats,
   onDeleteAccount,
   onClose,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [pinnedExpanded, setPinnedExpanded] = useState(true);
   const menuRef = useRef();
 
   useEffect(() => {
@@ -108,6 +120,9 @@ export default function Sidebar({
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  const pinnedChats = chats.filter((c) => Boolean(c.pinned));
+  const recentChats = chats.filter((c) => !c.pinned);
 
   return (
     <div className="sidebar">
@@ -121,18 +136,67 @@ export default function Sidebar({
 
       {/* Chat History */}
       <div className="sidebar-history">
-        <p className="sidebar-section-label">Recents</p>
-        {chats.length === 0 && <p className="sidebar-empty">No chats yet</p>}
-        {chats.map((chat) => (
-          <ChatItem
-            key={chat.id}
-            chat={chat}
-            isActive={activeChatId === chat.id}
-            onSelect={onSelectChat}
-            onDelete={onDeleteChat}
-            onRename={onRenameChat}
-          />
-        ))}
+        {historyLoading ? (
+          <div className="sidebar-skeleton-wrapper">
+            <div className="sidebar-skeleton-item" />
+            <div className="sidebar-skeleton-item" />
+            <div className="sidebar-skeleton-item" />
+          </div>
+        ) : (
+          <>
+            {chats.length === 0 && <p className="sidebar-empty">No chats yet</p>}
+
+            {/* Pinned Section (Only if pinnedChats.length > 0) */}
+            {pinnedChats.length > 0 && (
+          <div className="sidebar-section pinned-section">
+            <button
+              className="sidebar-section-header"
+              onClick={() => setPinnedExpanded((p) => !p)}
+            >
+              <span className="sidebar-section-title">📌 PINNED ({pinnedChats.length})</span>
+              <span className="sidebar-section-chevron">{pinnedExpanded ? '▾' : '▸'}</span>
+            </button>
+            {pinnedExpanded && (
+              <div className="sidebar-section-content">
+                {pinnedChats.map((chat) => (
+                  <ChatItem
+                    key={chat.id}
+                    chat={chat}
+                    isActive={activeChatId === chat.id}
+                    onSelect={onSelectChat}
+                    onDelete={onDeleteChat}
+                    onRename={onRenameChat}
+                    onTogglePin={onTogglePinChat}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Recents Section */}
+        {chats.length > 0 && (
+          <div className="sidebar-section">
+            <p className="sidebar-section-label">Recents</p>
+            {recentChats.length === 0 ? (
+              <p className="sidebar-empty">No recent chats</p>
+            ) : (
+              recentChats.map((chat) => (
+                <ChatItem
+                  key={chat.id}
+                  chat={chat}
+                  isActive={activeChatId === chat.id}
+                  onSelect={onSelectChat}
+                  onDelete={onDeleteChat}
+                  onRename={onRenameChat}
+                  onTogglePin={onTogglePinChat}
+                />
+              ))
+            )}
+          </div>
+        )}
+          </>
+        )}
       </div>
 
       {/* Bottom: User Menu */}

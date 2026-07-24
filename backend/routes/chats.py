@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, BackgroundTasks
 from sqlalchemy import select, delete, exists
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.schemas import RenameChat, AnalysisResponse, NewChat
@@ -15,47 +15,64 @@ import json
 router = APIRouter()
 
 
+def _process_vector_embeddings(pdf_path: str, filename: str, chat_id: int):
+    try:
+        CRAGPipeline(
+            pdf_path=pdf_path,
+            filename=filename,
+            chat_id=chat_id
+        )
+    finally:
+        if os.path.exists(pdf_path):
+            try:
+                os.remove(pdf_path)
+            except Exception:
+                pass
+
+
 @router.post('/chat')
 async def upload_chat(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session)
 ) -> NewChat:
     
-    # Upload the files to Supabase
+    # Upload file bytes to Supabase Storage
     content = await file.read()
     key = f'{current_user.id}/{file.filename}'
     upload_file(content, key)
 
-    # Create a new Chat
+    # Create new Chat DB record
     new_chat = Chat(user_id=current_user.id, name=file.filename, pdf_path=key)
     db.add(new_chat)
     await db.commit()
     await db.refresh(new_chat)
 
-    # Download file for PyPDFLoader
-    tmp_path = f"/tmp/{new_chat.id}_{file.filename}"
-    download_file(key, tmp_path)  
+    # Write file bytes directly to temp directory without redundant HTTP re-download
+    tmp_dir = os.path.join(os.getcwd(), "uploads", "tmp")
+    os.makedirs(tmp_dir, exist_ok=True)
+    tmp_path = os.path.join(tmp_dir, f"{new_chat.id}_{file.filename}")
+    with open(tmp_path, "wb") as f:
+        f.write(content)
 
-    # Run to immediately create embeddings + save them
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(
-        None,
-        lambda: CRAGPipeline(
-            pdf_path=tmp_path,
-            filename=file.filename,
-            chat_id=new_chat.id
-        )
+    # Offload vector embedding creation to BackgroundTask for instant response
+    background_tasks.add_task(
+        _process_vector_embeddings,
+        tmp_path,
+        file.filename,
+        new_chat.id
     )
+
     chat = NewChat(
         id=new_chat.id,
         user_id=new_chat.user_id,
         name=new_chat.name,
         pdf_path=new_chat.pdf_path,
         page_offset=new_chat.page_offset,
-        created_at=new_chat.created_at
+        created_at=new_chat.created_at,
+        pinned=new_chat.pinned
     )
-    os.remove(tmp_path)
     return chat
 
 
@@ -65,7 +82,9 @@ async def history(
     db: AsyncSession = Depends(get_async_session)
 ):
     
-    result = await db.execute(select(Chat).where(Chat.user_id == current_user.id))
+    result = await db.execute(
+        select(Chat).where(Chat.user_id == current_user.id).order_by(Chat.created_at.desc())
+    )
     return {
         'chats': result.scalars().all(),
         'username': current_user.name
@@ -209,3 +228,28 @@ async def get_analysis(
         summary=analysis.summary,
         improvements=json.loads(analysis.improvements),
     )
+
+@router.patch('/chats/{chat_id}/pin')
+async def pin_chat(
+    chat_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_async_session)
+):
+    result = await db.execute(select(Chat).where(Chat.id == chat_id))
+    chat = result.scalar_one_or_none()
+    if not chat:
+        raise HTTPException(status_code=404, detail='Chat not found')
+
+    if not chat.pinned:
+        # about to pin — check the 10 limit
+        count_result = await db.execute(
+            select(Chat).where(Chat.user_id == current_user.id, Chat.pinned == True)
+        )
+        pinned_count = len(count_result.scalars().all())
+        if pinned_count >= 10:
+            raise HTTPException(status_code=400, detail='Max 10 pinned chats allowed')
+
+    chat.pinned = not chat.pinned # just converts : not(True) = False. Helps to unpin by clicking again
+    await db.commit()
+    await db.refresh(chat)
+    return {'pinned': chat.pinned}

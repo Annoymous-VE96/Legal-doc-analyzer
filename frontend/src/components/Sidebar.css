@@ -56,6 +56,10 @@
   padding: 0.8rem 0.6rem;
 }
 
+.sidebar-section {
+  margin-bottom: 1rem;
+}
+
 .sidebar-section-label {
   font-size: 0.7rem;
   color: #888;
@@ -65,10 +69,70 @@
   margin-bottom: 0.5rem;
 }
 
+.sidebar-section-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  border: none;
+  color: #c9a84c;
+  padding: 0.35rem 0.4rem;
+  margin-bottom: 0.3rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Georgia', serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.15s;
+}
+
+.sidebar-section-header:hover {
+  background: #2a2a2d;
+}
+
+.sidebar-section-title {
+  font-weight: 600;
+}
+
+.sidebar-section-chevron {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.sidebar-section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
 .sidebar-empty {
   font-size: 0.8rem;
   color: #666;
   padding: 0.4rem;
+}
+
+/* ── Sidebar Skeleton Loader ── */
+.sidebar-skeleton-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+}
+
+.sidebar-skeleton-item {
+  height: 34px;
+  width: 100%;
+  background: linear-gradient(90deg, #242426 25%, #2e2e32 50%, #242426 75%);
+  background-size: 200% 100%;
+  border-radius: 6px;
+  animation: sidebar-pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes sidebar-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 .sidebar-chat-item {
