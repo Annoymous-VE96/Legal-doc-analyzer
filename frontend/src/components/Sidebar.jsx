@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './Sidebar.css';
+import { Pencil, Trash2, Pin, PinOff } from 'lucide-react';
+
 
 function ChatItem({ chat, isActive, onSelect, onDelete, onRename, onTogglePin }) {
   const [editing, setEditing] = useState(false);
@@ -35,7 +37,7 @@ function ChatItem({ chat, isActive, onSelect, onDelete, onRename, onTogglePin })
       className={`sidebar-chat-item ${isActive ? 'active' : ''}`}
       onClick={() => !editing && onSelect(chat)}
     >
-      <span className="chat-icon">{chat.pinned ? '📌' : '📄'}</span>
+      <span className="chat-icon">{chat.pinned ? <Pin size={14} /> : ''}</span>
 
       {editing ? (
         <input
@@ -73,16 +75,19 @@ function ChatItem({ chat, isActive, onSelect, onDelete, onRename, onTogglePin })
                   setMenuOpen(false);
                 }}
               >
-                {chat.pinned ? '📍 Unpin' : '📌 Pin'}
+                {chat.pinned ? <PinOff size={14} /> : <Pin size={14} />}
+                {chat.pinned ? 'Unpin' : 'Pin'}
               </button>
               <button onClick={startRename}>
-                ✏️ Rename
+                <Pencil size={14} />
+                Rename
               </button>
               <button
                 className="chat-item-delete-option"
                 onClick={(e) => { e.stopPropagation(); onDelete(chat.id); setMenuOpen(false); }}
               >
-                🗑️ Delete
+                <Trash2 size={14} />
+                Delete
               </button>
             </div>
           )}
