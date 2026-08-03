@@ -2,71 +2,90 @@
   width: 260px;
   min-width: 260px;
   height: 100vh;
-  background: #1c1c1e;
-  border-right: 1px solid #2e2e2e;
+  background: #090a0d;
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
   display: flex;
   flex-direction: column;
-  font-family: 'Georgia', serif;
-  color: #f0f0f0;
+  font-family: 'Lato', sans-serif;
+  color: #ececec;
 }
 
 .sidebar-top {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 1rem;
-  border-bottom: 1px solid #2e2e2e;
+  padding: 1.2rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .sidebar-close {
-  background: #2e2e2e;
-  border: 1px solid #444;
-  color: #ccc;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
   font-size: 0.85rem;
   cursor: pointer;
-  padding: 0.3rem 0.6rem;
-  border-radius: 4px;
-  transition: background 0.2s, color 0.2s;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
-.sidebar-close:hover { background: #444; color: #fff; }
+.sidebar-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
 
 .new-chat-btn {
   flex: 1;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  background: #2a2a2d;
-  border: 1px solid #3a3a3a;
+  background: rgba(201, 168, 76, 0.05);
+  border: 1px solid rgba(201, 168, 76, 0.25);
   color: #c9a84c;
-  padding: 0.5rem 0.9rem;
+  padding: 0.55rem 0.9rem;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.88rem;
-  font-family: 'Georgia', serif;
-  transition: background 0.2s, border-color 0.2s;
+  font-size: 0.85rem;
+  font-family: 'Lato', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  transition: all 0.25s ease;
 }
 .new-chat-btn:hover {
-  background: #333;
+  background: rgba(201, 168, 76, 0.12);
   border-color: #c9a84c;
+  box-shadow: 0 0 12px rgba(201, 168, 76, 0.1);
 }
 
 .sidebar-history {
   flex: 1;
   overflow-y: auto;
-  padding: 0.8rem 0.6rem;
+  padding: 1rem 0.6rem;
+}
+
+.sidebar-history::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar-history::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-history::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 2px;
 }
 
 .sidebar-section {
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
 }
 
 .sidebar-section-label {
   font-size: 0.7rem;
-  color: #888;
-  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   padding: 0 0.4rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.6rem;
+  font-weight: 600;
 }
 
 .sidebar-section-header {
@@ -77,19 +96,20 @@
   background: transparent;
   border: none;
   color: #c9a84c;
-  padding: 0.35rem 0.4rem;
-  margin-bottom: 0.3rem;
-  border-radius: 4px;
+  padding: 0.4rem 0.4rem;
+  margin-bottom: 0.4rem;
+  border-radius: 6px;
   cursor: pointer;
-  font-family: 'Georgia', serif;
+  font-family: 'Lato', sans-serif;
   font-size: 0.72rem;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   transition: background 0.15s;
 }
 
 .sidebar-section-header:hover {
-  background: #2a2a2d;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .sidebar-section-title {
@@ -98,18 +118,18 @@
 
 .sidebar-section-chevron {
   font-size: 0.75rem;
-  color: #888;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .sidebar-section-content {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.15rem;
 }
 
 .sidebar-empty {
   font-size: 0.8rem;
-  color: #666;
+  color: rgba(255, 255, 255, 0.3);
   padding: 0.4rem;
 }
 
@@ -124,7 +144,7 @@
 .sidebar-skeleton-item {
   height: 34px;
   width: 100%;
-  background: linear-gradient(90deg, #242426 25%, #2e2e32 50%, #242426 75%);
+  background: linear-gradient(90deg, #101116 25%, #181920 50%, #101116 75%);
   background-size: 200% 100%;
   border-radius: 6px;
   animation: sidebar-pulse 1.5s infinite ease-in-out;
@@ -139,28 +159,45 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.55rem 0.6rem;
+  padding: 0.6rem 0.65rem;
   border-radius: 6px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all 0.2s ease;
   position: relative;
+  border-left: 2px solid transparent;
 }
-.sidebar-chat-item:hover { background: #2a2a2d; }
-.sidebar-chat-item.active { background: #2a2a2d; border-left: 2px solid #c9a84c; }
+.sidebar-chat-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+.sidebar-chat-item.active {
+  background: rgba(201, 168, 76, 0.05);
+  border-left-color: #c9a84c;
+}
 
-.chat-icon { font-size: 0.85rem; flex-shrink: 0; }
+.chat-icon {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  color: #c9a84c;
+  display: flex;
+  align-items: center;
+}
 
 .chat-name {
   flex: 1;
-  font-size: 0.82rem;
-  color: #ddd;
+  font-size: 0.84rem;
+  color: rgba(255, 255, 255, 0.65);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 400;
+  transition: color 0.2s ease;
 }
-.sidebar-chat-item.active .chat-name { color: #f0f0f0; }
+.sidebar-chat-item:hover .chat-name,
+.sidebar-chat-item.active .chat-name {
+  color: #ececec;
+}
 
-/* ── Three-dot menu button (replaces old delete/rename buttons) ── */
+/* ── Menu options ── */
 .chat-item-menu {
   position: relative;
   flex-shrink: 0;
@@ -169,19 +206,21 @@
 .chat-menu-btn {
   background: transparent;
   border: none;
-  color: #999;
+  color: rgba(255, 255, 255, 0.4);
   font-size: 1rem;
   cursor: pointer;
   padding: 0.15rem 0.4rem;
   border-radius: 4px;
   opacity: 0;
-  transition: opacity 0.15s, background 0.15s, color 0.15s;
+  transition: all 0.15s ease;
   line-height: 1;
 }
 .sidebar-chat-item:hover .chat-menu-btn { opacity: 1; }
-.chat-menu-btn:hover { background: #3a3a3a; color: #fff; }
+.chat-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
 
-/* Keep menu button visible while its dropdown is open, even without hover */
 .chat-item-dropdown ~ .chat-menu-btn,
 .chat-item-menu:has(.chat-item-dropdown) .chat-menu-btn {
   opacity: 1;
@@ -191,12 +230,12 @@
   position: absolute;
   top: calc(100% + 4px);
   right: 0;
-  background: #252527;
-  border: 1px solid #3a3a3a;
+  background: #111216;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
   overflow: hidden;
   min-width: 140px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
   z-index: 200;
 }
 
@@ -204,35 +243,48 @@
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
   background: transparent;
   border: none;
-  border-bottom: 1px solid #2e2e2e;
-  color: #ddd;
-  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 0.65rem 0.85rem;
   text-align: left;
   cursor: pointer;
-  font-family: 'Georgia', serif;
+  font-family: 'Lato', sans-serif;
   font-size: 0.82rem;
-  transition: background 0.15s, color 0.15s;
+  transition: all 0.15s ease;
 }
 .chat-item-dropdown button:last-child { border-bottom: none; }
-.chat-item-dropdown button:hover { background: #2e2e30; color: #fff; }
-.chat-item-dropdown .chat-item-delete-option:hover { color: #e88; }
+.chat-item-dropdown button:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+}
+.chat-item-dropdown button svg {
+  color: #c9a84c;
+}
+.chat-item-dropdown .chat-item-delete-option:hover {
+  color: #e05252;
+}
+.chat-item-dropdown .chat-item-delete-option:hover svg {
+  color: #e05252;
+}
 
 .chat-rename-input {
   flex: 1;
-  background: #2a2a2d;
-  border: 1px solid #555;
-  color: #f0f0f0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  color: #ececec;
   border-radius: 4px;
   padding: 2px 6px;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
+  outline: none;
+  font-family: 'Lato', sans-serif;
 }
 
 .sidebar-bottom {
   padding: 0.8rem;
-  border-top: 1px solid #2e2e2e;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
   position: relative;
 }
 
@@ -241,24 +293,27 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  background: #2a2a2d;
-  border: 1px solid #3a3a3a;
-  color: #f0f0f0;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: #ececec;
   padding: 0.55rem 0.8rem;
   border-radius: 8px;
   cursor: pointer;
-  font-family: 'Georgia', serif;
+  font-family: 'Lato', sans-serif;
   font-size: 0.85rem;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
 }
-.user-pill:hover { border-color: #c9a84c; }
+.user-pill:hover {
+  border-color: rgba(201, 168, 76, 0.35);
+  background: rgba(201, 168, 76, 0.02);
+}
 
 .user-avatar {
   width: 26px;
   height: 26px;
   border-radius: 50%;
   background: #c9a84c;
-  color: #0d0d0d;
+  color: #07080b;
   font-weight: bold;
   font-size: 0.8rem;
   display: flex;
@@ -273,20 +328,24 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 500;
 }
 
-.user-chevron { font-size: 0.7rem; color: #888; }
+.user-chevron {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+}
 
 .user-floating-menu {
   position: absolute;
-  bottom: calc(100% - 0.5rem);
+  bottom: calc(100% - 0.2rem);
   left: 0.8rem;
   right: 0.8rem;
-  background: #252527;
-  border: 1px solid #3a3a3a;
+  background: #111216;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 -8px 24px rgba(0,0,0,0.5);
+  box-shadow: 0 -10px 30px rgba(0,0,0,0.55);
   z-index: 100;
 }
 
@@ -295,15 +354,20 @@
   display: block;
   background: transparent;
   border: none;
-  border-bottom: 1px solid #2e2e2e;
-  color: #ddd;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.7);
   padding: 0.7rem 1rem;
   text-align: left;
   cursor: pointer;
-  font-family: 'Georgia', serif;
-  font-size: 0.85rem;
-  transition: background 0.15s, color 0.15s;
+  font-family: 'Lato', sans-serif;
+  font-size: 0.84rem;
+  transition: all 0.15s ease;
 }
 .user-floating-menu button:last-child { border-bottom: none; }
-.user-floating-menu button:hover { background: #2e2e30; color: #fff; }
-.user-floating-menu .logout-option:hover { color: #e88; }
+.user-floating-menu button:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+}
+.user-floating-menu .logout-option:hover {
+  color: #e05252;
+}

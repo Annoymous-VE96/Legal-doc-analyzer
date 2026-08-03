@@ -3,8 +3,8 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #1a1a1a;
-  border-right: 1px solid #2a2a2a;
+  background: #0c0d12;
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
   overflow: hidden;
   flex: 1;
 }
@@ -14,16 +14,19 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.7rem 1rem 0.7rem 3rem; /* was 1rem — added left space for hamburger */
-  border-bottom: 1px solid #2a2a2a;
-  background: #141414;
+  padding: 0.8rem 1.2rem 0.8rem 3rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  background: #101116;
   flex-shrink: 0;
+  backdrop-filter: blur(12px);
 }
 
 .pdf-name {
   font-size: 0.85rem;
   color: #c9a84c;
   font-weight: 600;
+  font-family: 'Lato', sans-serif;
+  letter-spacing: 0.02em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -31,18 +34,21 @@
 }
 
 .change-doc-btn {
-  background: transparent;
-  border: 1px solid #444;
-  color: #aaa;
-  padding: 0.3rem 0.8rem;
-  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.6);
+  padding: 0.35rem 0.9rem;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 0.78rem;
-  transition: all 0.15s;
+  font-family: 'Lato', sans-serif;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 .change-doc-btn:hover {
   border-color: #c9a84c;
   color: #c9a84c;
+  background: rgba(201, 168, 76, 0.05);
 }
 
 /* ── Scroll Area ── */
@@ -51,26 +57,37 @@
   overflow-y: auto;
   display: flex;
   justify-content: center;
-  padding: 1rem 0.5rem;
-  background: #111;
+  padding: 1.5rem 1rem;
+  background: #07080b;
   position: relative;
   scroll-behavior: smooth;
 }
 
-.pdf-scroll-area::-webkit-scrollbar { width: 6px; }
-.pdf-scroll-area::-webkit-scrollbar-track { background: #1a1a1a; }
-.pdf-scroll-area::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+.pdf-scroll-area::-webkit-scrollbar {
+  width: 6px;
+}
+.pdf-scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+.pdf-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+}
+.pdf-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
 
 .pdf-loading {
-  color: #666;
+  color: rgba(255, 255, 255, 0.4);
   font-size: 0.9rem;
   margin-top: 3rem;
+  font-family: 'Lato', sans-serif;
 }
 
 /* ── react-pdf canvas ── */
 .react-pdf__Page {
-  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
-  border-radius: 4px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+  border-radius: 6px;
   overflow: hidden;
 }
 
@@ -80,32 +97,37 @@
   align-items: center;
   justify-content: center;
   gap: 0.6rem;
-  padding: 0.55rem 1rem;
-  border-top: 1px solid #2a2a2a;
-  background: #141414;
+  padding: 0.6rem 1.2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  background: #101116;
   flex-shrink: 0;
   font-size: 0.82rem;
-  color: #888;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'Lato', sans-serif;
 }
 
 .pdf-footer button {
-  background: transparent;
-  border: 1px solid #333;
-  color: #ccc;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
   width: 26px;
   height: 26px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 1rem;
   line-height: 1;
-  transition: border-color 0.15s, color 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
 }
 .pdf-footer button:hover:not(:disabled) {
   border-color: #c9a84c;
   color: #c9a84c;
+  background: rgba(201, 168, 76, 0.05);
 }
 .pdf-footer button:disabled {
-  opacity: 0.3;
+  opacity: 0.25;
   cursor: default;
 }
 
@@ -114,62 +136,68 @@
   align-items: center;
   gap: 0.4rem;
   margin-left: 0.6rem;
-  color: #aaa;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 /* ── Selection Toolbar ── */
 .selection-toolbar {
   position: absolute;
   transform: translate(-50%, -100%);
-  background: #1e1e1e;
-  border: 1px solid #333;
+  background: rgba(16, 17, 22, 0.85);
+  border: 1px solid rgba(201, 168, 76, 0.25);
   border-radius: 10px;
-  padding: 0.45rem 0.6rem;
+  padding: 0.5rem 0.65rem;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.45rem;
   z-index: 100;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 20px rgba(201, 168, 76, 0.04);
+  backdrop-filter: blur(16px);
   pointer-events: all;
-  min-width: 220px;
-  animation: toolbarPop 0.12s ease-out;
+  min-width: 230px;
+  animation: toolbarPop 0.12s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes toolbarPop {
-  from { opacity: 0; transform: translate(-50%, -90%); }
+  from { opacity: 0; transform: translate(-50%, -92%); }
   to   { opacity: 1; transform: translate(-50%, -100%); }
 }
 
 .toolbar-actions {
   display: flex;
-  gap: 0.35rem;
+  gap: 0.4rem;
 }
 
 .toolbar-actions button {
   flex: 1;
-  background: #2a2a2a;
-  border: 1px solid #3a3a3a;
-  color: #ececec;
-  padding: 0.3rem 0;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
+  padding: 0.35rem 0;
   border-radius: 6px;
   font-size: 0.78rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  font-family: 'Lato', sans-serif;
   letter-spacing: 0.02em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .toolbar-actions button:hover {
   background: #c9a84c;
   border-color: #c9a84c;
-  color: #0d0d0d;
+  color: #07080b;
+  box-shadow: 0 2px 8px rgba(201, 168, 76, 0.25);
 }
 
 .toolbar-colors {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   justify-content: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  padding-top: 0.45rem;
 }
 
 .color-dot {
@@ -184,31 +212,34 @@
 }
 
 .color-dot:hover {
-  transform: scale(1.3);
-  border-color: #fff4;
+  transform: scale(1.25);
+  border-color: rgba(255, 255, 255, 0.6);
 }
 
 .clear-dot {
-  background: #333 !important;
-  color: #888;
-  font-size: 0.65rem;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.68rem;
   display: flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
+  transition: all 0.15s ease;
 }
 
 .pdf-page-wrapper {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .pdf-page-count {
-  color: #666;
+  color: rgba(255, 255, 255, 0.35);
   font-size: 0.8rem;
   margin-left: 0.5rem;
 }
 
 .clear-dot:hover {
-  background: #555 !important;
-  color: #fff;
+  background: rgba(224, 82, 82, 0.15) !important;
+  border-color: rgba(224, 82, 82, 0.4) !important;
+  color: #e05252;
 }

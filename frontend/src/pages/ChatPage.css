@@ -1,9 +1,9 @@
 .page-wrapper {
   display: flex;
   height: 100vh;
-  background: #1c1c1e;
-  color: #f0f0f0;
-  font-family: Georgia, serif;
+  background: #0c0d12;
+  color: #ececec;
+  font-family: 'Lato', sans-serif;
   overflow: hidden;
 }
 
@@ -17,12 +17,18 @@
   font-size: 1.3rem;
   cursor: pointer;
   z-index: 20;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.open-sidebar-btn:hover {
+  color: #dbbe6a;
+  transform: scale(1.08);
 }
 
 .main {
   flex: 1;
   display: flex;
   overflow: hidden;
+  background: #0c0d12;
 }
 
 .upload-screen {
@@ -31,29 +37,120 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
+  gap: 1.2rem;
+  background: radial-gradient(circle at 50% 50%, rgba(201, 168, 76, 0.03) 0%, #07080b 80%);
 }
 
-.upload-icon { font-size: 3rem; margin: 0; }
-.upload-title { font-size: 1.5rem; margin: 0; color: #f0f0f0; }
-.upload-sub { color: #999; margin: 0; font-size: 0.9rem; }
+.upload-icon {
+  font-size: 3rem;
+  margin: 0;
+  filter: drop-shadow(0 4px 12px rgba(201, 168, 76, 0.2));
+  animation: bounce 2s infinite ease-in-out;
+}
+
+.upload-title {
+  font-size: 1.8rem;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  margin: 0;
+  color: #f0ebe0;
+}
+
+.upload-sub {
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 300;
+}
 
 .upload-btn {
-  background: #c9a84c;
+  background: linear-gradient(135deg, #c9a84c 0%, #b3923b 100%);
   border: none;
-  color: #0d0d0d;
-  padding: 0.7rem 2rem;
-  border-radius: 8px;
+  color: #07080b;
+  padding: 0.75rem 2.2rem;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: bold;
-  font-size: 0.9rem;
-  font-family: Georgia, serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  font-family: 'Lato', sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(201, 168, 76, 0.15);
 }
-
-.upload-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.upload-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dbbe6a 0%, #c9a84c 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(201, 168, 76, 0.25);
+}
+.upload-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+.upload-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .doc-chat-layout {
   display: flex;
   flex: 1;
   overflow: hidden;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+
+/* ── Interactive Upload Card ── */
+.upload-icon-container {
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px dashed rgba(201, 168, 76, 0.25);
+  border-radius: 16px;
+  padding: 3rem 4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  text-align: center;
+  max-width: 440px;
+  width: 90%;
+  box-sizing: border-box;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+.upload-icon-container:hover {
+  border-color: #c9a84c;
+  background: rgba(201, 168, 76, 0.02);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 30px rgba(201, 168, 76, 0.02);
+  transform: translateY(-4px);
+}
+.upload-cloud-icon {
+  color: #c9a84c;
+  margin-bottom: 0.5rem;
+  animation: bounce 2s infinite ease-in-out;
+}
+.upload-icon-container h3 {
+  font-size: 1.45rem;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+  margin: 0;
+  color: #f0ebe0;
+}
+.upload-icon-container p {
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 300;
+  line-height: 1.4;
+}
+.upload-format-hint {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(201, 168, 76, 0.45);
+  margin-top: 0.4rem;
+  font-weight: 500;
 }

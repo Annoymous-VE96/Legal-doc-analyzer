@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { UploadCloud } from 'lucide-react';
 import { uploadPDF, fetchHistory, fetchMessages, logoutUser, deleteChat, deleteAllChats, renameChat, deleteAccount, togglePinChat } from '../api/api';
 import Sidebar from '../components/Sidebar';
 import PDFViewer from '../components/PDFViewer';
@@ -11,28 +12,20 @@ const BASE_URL = process.env.REACT_APP_API_URL;
 export default function ChatPage() {
   const navigate = useNavigate();
   const fileRef = useRef();
+  const abortControllerRef = useRef(null);
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [username, setUsername] = useState('');
   const [chats, setChats] = useState([]);
-  const [activeChatId, setActiveChatId] = useState(null);
+  const [activeChatId, setActiveChatId] = useState(() => localStorage.getItem('activeChatId') || null);
   const [activeChat, setActiveChat] = useState(null);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(true);
 
-  useEffect(() => {
-    fetchHistory()
-      .then((data) => {
-        setChats(data.chats);
-        setUsername(data.username);
-      })
-      .catch(() => navigate('/'))
-      .finally(() => setHistoryLoading(false));
-  }, [navigate]);
-
-  const handleSelectChat = async (chat) => {
+  const handleSelectChat = useCallback(async (chat) => {
     setActiveChatId(chat.id);
+    localStorage.setItem('activeChatId', chat.id);
     setLoading(true);
     try {
       const data = await fetchMessages(chat.id);
@@ -47,7 +40,31 @@ export default function ChatPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchHistory()
+      .then((data) => {
+        setChats(data.chats);
+        setUsername(data.username);
+        
+        const storedChatId = localStorage.getItem('activeChatId');
+        if (storedChatId && data.chats.length > 0) {
+          const found = data.chats.find((c) => String(c.id) === String(storedChatId));
+          if (found) {
+            handleSelectChat(found);
+          } else {
+            setActiveChatId(null);
+            localStorage.removeItem('activeChatId');
+          }
+        } else {
+          setActiveChatId(null);
+          localStorage.removeItem('activeChatId');
+        }
+      })
+      .catch(() => navigate('/'))
+      .finally(() => setHistoryLoading(false));
+  }, [navigate, handleSelectChat]);
 
   const handleUpload = async (e) => {
     const file = e.target.files[0];
@@ -71,6 +88,7 @@ export default function ChatPage() {
       const newChat = await uploadPDF(file);
       setChats((prev) => [newChat, ...prev]);
       setActiveChatId(newChat.id);
+      localStorage.setItem('activeChatId', newChat.id);
       setActiveChat((prev) => (prev && prev.id === tempId ? { ...prev, id: newChat.id } : prev));
     } catch (err) {
       alert('Upload failed: ' + (err.detail || 'Unknown error'));
@@ -82,7 +100,7 @@ export default function ChatPage() {
   // ── handleSend with client-side typing effect ──
   const handleSend = async (overrideText) => {
     const userText = typeof overrideText === 'string' ? overrideText : input;
-    if (!userText.trim() || !activeChatId || loading) return;
+    if (!userText.trim() || !activeChatId) return;
     setInput('');
 
     setActiveChat((prev) => ({
@@ -95,6 +113,12 @@ export default function ChatPage() {
     }));
 
     setLoading(true);
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     // Typing queue: decouples network arrival speed from display speed
     let queue = '';
@@ -132,6 +156,7 @@ export default function ChatPage() {
           Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({ content: userText }),
+        signal: controller.signal,
       });
 
       const reader = res.body.getReader();
@@ -151,6 +176,22 @@ export default function ChatPage() {
         }
       }
     } catch (err) {
+      if (err.name === 'AbortError') {
+        console.log('Stream aborted by user');
+        setActiveChat((prev) => {
+          if (!prev) return prev;
+          const msgs = [...prev.messages];
+          const lastMsg = msgs[msgs.length - 1];
+          if (lastMsg && lastMsg.role === 'ai') {
+            msgs[msgs.length - 1] = {
+              ...lastMsg,
+              text: lastMsg.text + ' 🛑 *[Generation Interrupted]*',
+            };
+          }
+          return { ...prev, messages: msgs };
+        });
+        return;
+      }
       console.error('Stream error:', err);
       setActiveChat((prev) => {
         const msgs = [...prev.messages];
@@ -159,6 +200,14 @@ export default function ChatPage() {
       });
     } finally {
       setLoading(false);
+      abortControllerRef.current = null;
+    }
+  };
+
+  const handleStopGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      setLoading(false);
     }
   };
 
@@ -166,7 +215,11 @@ export default function ChatPage() {
     try {
       await deleteChat(chatId);
       setChats((prev) => prev.filter((c) => c.id !== chatId));
-      if (activeChatId === chatId) { setActiveChatId(null); setActiveChat(null); }
+      if (activeChatId === chatId) {
+        setActiveChatId(null);
+        setActiveChat(null);
+        localStorage.removeItem('activeChatId');
+      }
     } catch (err) {
       alert('Delete failed: ' + (err.detail || 'Unknown error'));
     }
@@ -178,6 +231,7 @@ export default function ChatPage() {
       setChats([]);
       setActiveChatId(null);
       setActiveChat(null);
+      localStorage.removeItem('activeChatId');
     } catch (err) {
       alert('Failed: ' + (err.detail || 'Unknown error'));
     }
@@ -233,8 +287,8 @@ export default function ChatPage() {
           username={username}
           historyLoading={historyLoading}
           onSelectChat={handleSelectChat}
-          onNewChat={() => { setActiveChatId(null); setActiveChat(null); fileRef.current.click(); }}
-          onLogout={() => { logoutUser(); navigate('/'); }}
+          onNewChat={() => { setActiveChatId(null); setActiveChat(null); localStorage.removeItem('activeChatId'); fileRef.current.click(); }}
+          onLogout={() => { logoutUser(); localStorage.removeItem('activeChatId'); navigate('/'); }}
           onDeleteChat={handleDeleteChat}
           onRenameChat={handleRenameChat}
           onTogglePinChat={handleTogglePinChat}
@@ -249,14 +303,42 @@ export default function ChatPage() {
       <input ref={fileRef} type="file" accept=".pdf" style={{ display: 'none' }} onChange={handleUpload} />
 
       <div className="main">
-        {!activeChat ? (
+        {activeChatId && !activeChat ? (
+          <div className="doc-chat-layout">
+            <div className="pdf-panel">
+              <div className="pdf-header">
+                <div className="pdf-name">Loading legal document...</div>
+              </div>
+              <div className="pdf-scroll-area">
+                <div className="pdf-loading">Loading document viewer...</div>
+              </div>
+            </div>
+            <div className="chat-panel">
+              <div className="tab-bar">
+                <button className="tab active">Chat</button>
+                <button className="tab">Analysis</button>
+              </div>
+              <div className="messages">
+                <div className="ai-msg">
+                  <div className="typing-dots">
+                    <span></span><span></span><span></span>
+                  </div>
+                </div>
+              </div>
+              <div className="input-row">
+                <input className="chat-input" placeholder="Preparing workspace..." disabled />
+                <button className="send-btn" disabled>→</button>
+              </div>
+            </div>
+          </div>
+        ) : !activeChat ? (
           <div className="upload-screen">
-            <p className="upload-icon">📄</p>
-            <h2 className="upload-title">Upload a Legal Document</h2>
-            <p className="upload-sub">PDF format supported</p>
-            <button className="upload-btn" onClick={() => fileRef.current.click()} disabled={loading}>
-              {loading ? 'Uploading...' : 'Choose File'}
-            </button>
+            <div className="upload-icon-container" onClick={() => !loading && fileRef.current.click()}>
+              <UploadCloud size={48} className="upload-cloud-icon" />
+              <h3>{loading ? 'Uploading contract...' : 'Upload a Legal Document'}</h3>
+              <p>{loading ? 'Please wait while parsing semantic nodes...' : 'Drag & drop contracts here or click to browse'}</p>
+              <span className="upload-format-hint">PDF format supported</span>
+            </div>
           </div>
         ) : (
           <div className="doc-chat-layout">
@@ -273,6 +355,7 @@ export default function ChatPage() {
               loading={loading}
               onInputChange={setInput}
               onSend={handleSend}
+              onStop={handleStopGeneration}
               chatId={activeChatId}
             />
           </div>

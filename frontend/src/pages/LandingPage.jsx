@@ -1,11 +1,16 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Scale, FileText, ShieldCheck, Sparkles, Globe, ArrowRight, UploadCloud, CheckCircle2, Activity, Search, ChevronDown } from 'lucide-react';
 import './LandingPage.css';
 
 function LandingPage() {
   const navigate = useNavigate();
   const canvasRef = useRef(null);
   const quoteRef = useRef(null);
+
+  const scrollToFeatures = () => {
+    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -70,41 +75,17 @@ function LandingPage() {
     };
   }, []);
 
-  const features = [
-    {
-      icon: '📄',
-      title: 'PDF Upload & Parsing',
-      desc: 'Drop in any contract or filing — text is extracted and chunked automatically.',
-    },
-    {
-      icon: '🔍',
-      title: 'Corrective RAG Pipeline',
-      desc: 'Retrieved passages are graded for relevance before being used, so answers stay grounded in your document.',
-    },
-    {
-      icon: '💬',
-      title: 'Streaming AI Answers',
-      desc: 'Responses stream in as they\u2019re generated, so you see the answer take shape in real time.',
-    },
-    {
-      icon: '🌐',
-      title: 'Web Search Fallback',
-      desc: 'If your document doesn\u2019t have the answer, a live web search fills the gap.',
-    },
-  ];
-
   return (
     <div className="lp-wrapper">
       {/* Particle canvas */}
       <canvas ref={canvasRef} className="lp-canvas" />
 
-      {/* Vertical rule lines */}
-      <div className="lp-vline lp-vline--left" />
-      <div className="lp-vline lp-vline--right" />
-
       {/* Navbar */}
       <nav className="lp-navbar">
-        <span className="lp-logo">⚖️ &nbsp;LexAI</span>
+        <span className="lp-logo">
+          <Scale size={20} className="lp-logo-icon" />
+          &nbsp;LexAI
+        </span>
         <div className="lp-nav-actions">
           <button className="nav-login" onClick={() => navigate('/auth?mode=login')}>
             Login
@@ -115,58 +96,182 @@ function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero */}
-      <div className="lp-hero">
-        <p className="hero-badge lp-badge">Powered by CRAG · RAG + AI</p>
+      {/* Hero Section - Split View */}
+      <header className="lp-hero-container">
+        <div className="lp-hero-grid">
+          {/* Left Column: Sales & Call-to-action */}
+          <div className="lp-hero-left">
+            <div className="hero-badge lp-badge">
+              <Sparkles size={12} style={{ marginRight: '6px' }} />
+              NEW: Corrective RAG v2
+            </div>
 
-        <h1 className="hero-h1 lp-heading">
-          Analyze Legal Docs
-          <br />
-          <em className="lp-accent">Instantly.</em>
-        </h1>
+            <h1 className="hero-h1 lp-heading">
+              Analyze Legal Docs <br />
+              <span className="lp-accent">With Absolute Grounding.</span>
+            </h1>
 
-        <p className="hero-sub lp-subtext">
-          Upload any legal document and chat with it.
-          <br />
-          Summaries, clause breakdowns, instant answers —
-          <br />
-          no law degree needed.
-        </p>
+            <p className="hero-sub lp-subtext">
+              An intelligent workspace for legal analysis. Automatically verify retrieved text, detect hidden risks, and grade clauses for compliance in real-time.
+            </p>
 
-        <div className="hero-cta lp-cta">
-          <button className="cta-btn" onClick={() => navigate('/auth?mode=signup')}>
-            Get Started Free →
-          </button>
-        </div>
+            <div className="hero-cta lp-cta">
+              <button className="cta-btn cta-btn--primary" onClick={() => navigate('/auth?mode=signup')}>
+                Get Started Free<ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
 
-        {/* Divider line */}
-        <div className="hero-divider lp-divider" />
+          {/* Right Column: Interactive App Workspace Mockup */}
+          <div className="lp-hero-right">
+            <div className="lp-app-mockup">
+              {/* Mockup Header Bar */}
+              <div className="mock-window-header">
+                <div className="mock-window-dots">
+                  <span className="dot dot--red"></span>
+                  <span className="dot dot--yellow"></span>
+                  <span className="dot dot--green"></span>
+                </div>
+                <div className="mock-window-title">LexAI Workspace v1.4</div>
+              </div>
 
-        {/* Feature cards */}
-        <div className="hero-features lp-features">
-          {features.map((f) => (
-            <div className="feature-card" key={f.title}>
-              <span className="feature-icon">{f.icon}</span>
-              <div className="feature-text-block">
-                <span className="lp-feature-title">{f.title}</span>
-                <span className="lp-feature-desc">{f.desc}</span>
+              {/* Mockup Application Window */}
+              <div className="mock-window-body">
+                {/* Left panel (Document Viewer) */}
+                <div className="mock-doc-panel">
+                  <div className="mock-panel-title">
+                    <FileText size={12} />
+                    <span>employment_agreement_draft.pdf</span>
+                  </div>
+                  <div className="mock-doc-content">
+                    <div className="mock-doc-line"></div>
+                    <div className="mock-doc-line"></div>
+                    <div className="mock-doc-line mock-doc-line--highlighted">Section 4. INDEMNIFICATION. Under no circumstances shall the Company be held liable for any indirect, incidental, or consequential damages resulting from...</div>
+                    <div className="mock-doc-line"></div>
+                    <div className="mock-doc-line"></div>
+                  </div>
+                </div>
+
+                {/* Right panel (Chat & Analytics) */}
+                <div className="mock-chat-panel">
+                  <div className="mock-panel-title">
+                    <Activity size={12} />
+                    <span>AI Analysis</span>
+                  </div>
+                  <div className="mock-chat-messages">
+                    <div className="mock-msg mock-msg--user">
+                      Any concerns about Section 4?
+                    </div>
+                    <div className="mock-msg mock-msg--ai">
+                      <div className="mock-badge">
+                        <CheckCircle2 size={10} />
+                        <span>CRAG Verified · 99% Relevance</span>
+                      </div>
+                      <p>
+                        Section 4 establishes a **one-way indemnification** clause that exclusively protects the Employer. 
+                      </p>
+                      <span className="mock-citation">Source: Page 4, Clause 4.2</span>
+                    </div>
+                  </div>
+                  <div className="mock-input-row">
+                    <div className="mock-input-field">Ask a follow-up question...</div>
+                    <button className="mock-send-btn">➔</button>
+                  </div>
+                </div>
               </div>
             </div>
-          ))}
+          </div>
+        </div>
+        
+        <div className="lp-scroll-indicator" onClick={scrollToFeatures}>
+          <span>Scroll to explore</span>
+          <ChevronDown size={14} className="bouncing-arrow" />
+        </div>
+      </header>
+
+      {/* Bento Grid Features Section */}
+      <section className="lp-bento-section" id="features">
+        <div className="section-header">
+          <h2 className="section-title">Designed for Enterprise Diligence</h2>
+          <p className="section-subtext">Advanced cognitive architectures optimized for accuracy and verification speed.</p>
         </div>
 
-        {/* Scroll hint */}
-        <div
-          className="scroll-hint"
-          onClick={() => quoteRef.current?.scrollIntoView({ behavior: 'smooth' })}
-          style={{ cursor: 'pointer' }}
-        >
-          <span className="scroll-label">Scroll</span>
-          <span className="scroll-arrow">▾</span>
-        </div>
-      </div>
+        <div className="lp-bento-grid">
+          {/* Bento Card 1: Double-wide (PDF Parsing) */}
+          <div className="bento-card bento-card--large">
+            <div className="bento-content">
+              <div className="bento-icon-box">
+                <FileText size={20} />
+              </div>
+              <h3 className="bento-title">Hybrid PDF Parsing</h3>
+              <p className="bento-desc">In-memory parsing splits legal texts into clean semantic nodes while preserving tables, headings, and signature pages intact.</p>
+            </div>
+            <div className="bento-visual bento-visual--parsing">
+              <div className="mock-upload-box">
+                <UploadCloud size={32} />
+                <span>Drag & drop contracts here</span>
+                <span className="upload-file-pill">nda_standard_mutual_2026.pdf</span>
+              </div>
+            </div>
+          </div>
 
-      {/* Bottom quote strip */}
+          {/* Bento Card 2: Single-wide (Corrective RAG) */}
+          <div className="bento-card">
+            <div className="bento-content">
+              <div className="bento-icon-box">
+                <ShieldCheck size={20} />
+              </div>
+              <h3 className="bento-title">Corrective RAG</h3>
+              <p className="bento-desc">Evaluates all retrieved context blocks. Irrelevant passages are discarded before generating responses to guarantee zero hallucinations.</p>
+            </div>
+            <div className="bento-visual bento-visual--center">
+              <div className="mock-rag-score">
+                <div className="score-ring">98.4%</div>
+                <span>Average Context Grounding Score</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bento Card 3: Single-wide (Web Search Fallback) */}
+          <div className="bento-card">
+            <div className="bento-content">
+              <div className="bento-icon-box">
+                <Globe size={20} />
+              </div>
+              <h3 className="bento-title">Extended Knowledge</h3>
+              <p className="bento-desc">When answers aren't in the uploaded file, the pipeline queries live regulatory indexes and SEC EDGAR databases.</p>
+            </div>
+            <div className="bento-visual bento-visual--center">
+              <div className="mock-search-status">
+                <Search size={14} className="spinning-icon" />
+                <span>Searching EDGAR registry...</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bento Card 4: Double-wide (Streaming Answers) */}
+          <div className="bento-card bento-card--large">
+            <div className="bento-content">
+              <div className="bento-icon-box">
+                <Sparkles size={20} />
+              </div>
+              <h3 className="bento-title">Streaming AI Insights</h3>
+              <p className="bento-desc">Watch legal explanations compile syllable-by-syllable. Fully cite-linked responses mapping directly back to page highlights.</p>
+            </div>
+            <div className="bento-visual bento-visual--streaming">
+              <div className="mock-streaming-preview">
+                <span className="mock-word">The</span>
+                <span className="mock-word">indemnification</span>
+                <span className="mock-word">clause</span>
+                <span className="mock-word mock-word--active">is</span>
+                <span className="mock-cursor">▋</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Aristotle Quote strip */}
       <div className="lp-quote-strip" ref={quoteRef}>
         <span className="lp-quote-text">
           "The law is reason, free from passion." &nbsp;—&nbsp; Aristotle
@@ -175,7 +280,10 @@ function LandingPage() {
 
       {/* Footer */}
       <footer className="lp-footer">
-        <span className="lp-footer-text">⚖️ LexAI &nbsp;·&nbsp; © 2026 All rights reserved.</span>
+        <span className="lp-footer-text">
+          <Scale size={13} className="lp-footer-icon" />
+          &nbsp;LexAI &nbsp;·&nbsp; © 2026 All rights reserved.
+        </span>
       </footer>
     </div>
   );
