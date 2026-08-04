@@ -8,7 +8,7 @@ from operator import add
 
 from dotenv import load_dotenv
 from pydantic import BaseModel
-
+from typing import List, TypedDict, Annotated, Optional, Callable
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.document_loaders import PyPDFLoader
@@ -83,7 +83,7 @@ class CRAGPipeline:
         self.upper_th = upper_th
         self.lower_th = lower_th
         self.page_offset = 0
-
+        self._status_callback: Optional[Callable[[str], None]] = None
         self.splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size, chunk_overlap=chunk_overlap
         )
@@ -104,7 +104,9 @@ class CRAGPipeline:
 
         self.app = self._build_graph()
 
-
+    def _emit_status(self, label: str) -> None:
+        if self._status_callback:
+            self._status_callback(label)
     # ─────────────────────────────────────────
     # Supabase download (only used if chunks missing)
     # ─────────────────────────────────────────
@@ -301,6 +303,7 @@ class CRAGPipeline:
     # Graph Nodes
     # ─────────────────────────────────────────
     def retrieve(self, state: State) -> State:
+        self._emit_status("Retrieving..")
         q = state["question"]
         q_embedding = self.embeddings.embed_query(q)
 
@@ -329,6 +332,7 @@ class CRAGPipeline:
         return {"docs": [Document(page_content=r[0]) for r in rows]}
 
     def eval_each_docs(self, state: State) -> State:
+        self._emit_status("Evaluating..")
         q = state["question"]
         docs = state.get("docs", [])
 
@@ -360,10 +364,12 @@ class CRAGPipeline:
                 "reason": "Scores are mixed between thresholds"}
 
     def rewrite_query_node(self, state: State) -> State:
+        self._emit_status("Rewriting query..")
         output = self.rewrite_chain.invoke({"question": state["question"]})
         return {"web_query": output.query}
 
     def web_search_node(self, state: State) -> State:
+        self._emit_status("Searching the web..")
         q = state.get("web_query") or state["question"]
         results = self.tavily.invoke({"query": q})
 
@@ -383,6 +389,7 @@ class CRAGPipeline:
         return {"web_docs": web_docs}
 
     def refine(self, state: State) -> State:
+        self._emit_status("Compiling context..")
         verdict = state.get("verdict", "")
         q = state["question"]
 
@@ -466,7 +473,8 @@ class CRAGPipeline:
     # ─────────────────────────────────────────
     # Run
     # ─────────────────────────────────────────
-    def run(self, question: str, chat_history: List[dict]) -> State:
+    def run(self, question: str, chat_history: List[dict], status_callback: Optional[Callable[[str], None]] = None) -> State:
+        self._status_callback = status_callback
         initial_state: State = {
             "question":       question,
             "chat_history":   chat_history,

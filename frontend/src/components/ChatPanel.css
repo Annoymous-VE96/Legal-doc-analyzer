@@ -3,7 +3,7 @@
   min-width: 200px;
   display: flex;
   flex-direction: column;
-  background: #0c0d12;
+  background: #151618;
   flex-shrink: 0;
   border-left: 1px solid rgba(255, 255, 255, 0.04);
 }
@@ -15,7 +15,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
-  background: #0c0d12;
+  background: #151618;
 }
 
 /* ── Custom Scrollbar ── */
@@ -34,7 +34,7 @@
 }
 
 .ai-msg {
-  background: #111216;
+  background: #1e1f20;
   border: 1px solid rgba(255, 255, 255, 0.04);
   border-radius: 12px 12px 12px 2px;
   padding: 0.9rem 1.3rem;
@@ -70,12 +70,12 @@
   gap: 0.65rem;
   padding: 1.2rem;
   border-top: 1px solid rgba(255, 255, 255, 0.04);
-  background: #101116;
+  background: #1a1b1e;
 }
 
 .chat-input {
   flex: 1;
-  background: #16171e;
+  background: #212226;
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   padding: 0.7rem 1rem;
@@ -171,6 +171,18 @@
   margin-left: 2px;
   color: #c9a84c;
 }
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-text {
+  font-size: 0.85rem;
+  color: #dbbe6a;
+  font-family: 'Lato', sans-serif;
+  font-style: italic;
+}
 
 .typing-dots {
   display: flex;
@@ -240,7 +252,7 @@
 /* ── Tab Bar ── */
 .tab-bar {
   display: flex;
-  background: #101116;
+  background: #1a1b1e;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   padding: 6px 12px;
   gap: 8px;

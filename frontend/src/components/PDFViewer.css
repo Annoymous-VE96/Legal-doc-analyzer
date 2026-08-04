@@ -3,7 +3,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #0c0d12;
+  background: #151618;
   border-right: 1px solid rgba(255, 255, 255, 0.04);
   overflow: hidden;
   flex: 1;
@@ -16,7 +16,7 @@
   align-items: center;
   padding: 0.8rem 1.2rem 0.8rem 3rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  background: #101116;
+  background: #1a1b1e;
   flex-shrink: 0;
   backdrop-filter: blur(12px);
 }
@@ -58,7 +58,7 @@
   display: flex;
   justify-content: center;
   padding: 1.5rem 1rem;
-  background: #07080b;
+  background: #0f1012;
   position: relative;
   scroll-behavior: smooth;
 }
@@ -99,7 +99,7 @@
   gap: 0.6rem;
   padding: 0.6rem 1.2rem;
   border-top: 1px solid rgba(255, 255, 255, 0.04);
-  background: #101116;
+  background: #1a1b1e;
   flex-shrink: 0;
   font-size: 0.82rem;
   color: rgba(255, 255, 255, 0.5);

@@ -89,8 +89,11 @@ export default function ChatPanel({ messages, input, loading, onInputChange, onS
                     className={`${msg.role === 'user' ? 'user-msg' : 'ai-msg'} ${isStreaming ? 'streaming' : ''}`}
                   >
                     {isThinking ? (
-                      <div className="typing-dots">
-                        <span></span><span></span><span></span>
+                      <div className="status-indicator">
+                        <div className="typing-dots">
+                          <span></span><span></span><span></span>
+                        </div>
+                        <span className="status-text">{msg.status || 'Thinking...'}</span>
                       </div>
                     ) : msg.role === 'ai' ? (
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>

@@ -108,7 +108,7 @@ export default function ChatPage() {
       messages: [
         ...prev.messages,
         { role: 'user', text: userText },
-        { role: 'ai', text: '' },
+        { role: 'ai', text: '', status: '' },
       ],
     }));
 
@@ -161,19 +161,49 @@ export default function ChatPage() {
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
+      let buffer = '';
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
-
-        const raw = decoder.decode(value);
-        const lines = raw.split('\n').filter((l) => l.startsWith('data: '));
-
-        for (const line of lines) {
-          const chunk = line.replace('data: ', '');
-          if (chunk === '[DONE]') break;
-          enqueue(chunk);
+        if (done) {
+          break;
         }
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        let doneReceived = false;
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          if (trimmed.startsWith('data: ')) {
+            const dataContent = trimmed.substring(6).trim();
+            if (dataContent === '[DONE]') {
+              doneReceived = true;
+              break;
+            }
+            try {
+              const parsed = JSON.parse(dataContent);
+              if (parsed.type === 'status') {
+                setActiveChat((prev) => {
+                  if (!prev) return prev;
+                  const msgs = [...prev.messages];
+                  msgs[msgs.length - 1] = {
+                    ...msgs[msgs.length - 1],
+                    status: parsed.label,
+                  };
+                  return { ...prev, messages: msgs };
+                });
+              } else if (parsed.type === 'token') {
+                enqueue(parsed.content);
+              }
+            } catch (err) {
+              console.error('Error parsing SSE json:', err, 'line was:', trimmed);
+            }
+          }
+        }
+        if (doneReceived) break;
       }
     } catch (err) {
       if (err.name === 'AbortError') {
@@ -212,28 +242,58 @@ export default function ChatPage() {
   };
 
   const handleDeleteChat = async (chatId) => {
+    const previousChats = chats;
+    const previousActiveChatId = activeChatId;
+    const previousActiveChat = activeChat;
+
+    // Optimistically update UI immediately
+    setChats((prev) => prev.filter((c) => c.id !== chatId));
+    if (activeChatId === chatId) {
+      setActiveChatId(null);
+      setActiveChat(null);
+      localStorage.removeItem('activeChatId');
+    }
+
     try {
       await deleteChat(chatId);
-      setChats((prev) => prev.filter((c) => c.id !== chatId));
-      if (activeChatId === chatId) {
-        setActiveChatId(null);
-        setActiveChat(null);
+    } catch (err) {
+      // Revert on failure
+      setChats(previousChats);
+      setActiveChatId(previousActiveChatId);
+      setActiveChat(previousActiveChat);
+      if (previousActiveChatId) {
+        localStorage.setItem('activeChatId', previousActiveChatId);
+      } else {
         localStorage.removeItem('activeChatId');
       }
-    } catch (err) {
       alert('Delete failed: ' + (err.detail || 'Unknown error'));
     }
   };
 
   const handleDeleteAllChats = async () => {
+    const previousChats = chats;
+    const previousActiveChatId = activeChatId;
+    const previousActiveChat = activeChat;
+
+    // Optimistically update UI immediately
+    setChats([]);
+    setActiveChatId(null);
+    setActiveChat(null);
+    localStorage.removeItem('activeChatId');
+
     try {
       await deleteAllChats();
-      setChats([]);
-      setActiveChatId(null);
-      setActiveChat(null);
-      localStorage.removeItem('activeChatId');
     } catch (err) {
-      alert('Failed: ' + (err.detail || 'Unknown error'));
+      // Revert on failure
+      setChats(previousChats);
+      setActiveChatId(previousActiveChatId);
+      setActiveChat(previousActiveChat);
+      if (previousActiveChatId) {
+        localStorage.setItem('activeChatId', previousActiveChatId);
+      } else {
+        localStorage.removeItem('activeChatId');
+      }
+      alert('Failed to delete all chats: ' + (err.detail || 'Unknown error'));
     }
   };
 
@@ -250,30 +310,41 @@ export default function ChatPage() {
   };
 
   const handleRenameChat = async (chatId, newName) => {
+    const previousChats = chats;
+    const previousActiveChat = activeChat;
+
+    // Optimistically update UI immediately
+    setChats((prev) => prev.map((c) => c.id === chatId ? { ...c, name: newName } : c));
+    if (activeChatId === chatId && activeChat) {
+      setActiveChat((prev) => ({ ...prev, name: newName }));
+    }
+
     try {
       await renameChat(chatId, newName);
-      setChats((prev) => prev.map((c) => c.id === chatId ? { ...c, name: newName } : c));
-      if (activeChatId === chatId) setActiveChat((prev) => ({ ...prev, name: newName }));
     } catch (err) {
+      // Revert on failure
+      setChats(previousChats);
+      setActiveChat(previousActiveChat);
       alert('Rename failed: ' + (err.detail || 'Unknown error'));
     }
   };
 
   const handleTogglePinChat = async (chatId) => {
-    // Instant optimistic UI update
+    const previousChats = chats;
+
+    // Optimistically update UI immediately
     setChats((prev) =>
       prev.map((c) => (c.id === chatId ? { ...c, pinned: !c.pinned } : c))
     );
+
     try {
       const res = await togglePinChat(chatId);
       setChats((prev) =>
         prev.map((c) => (c.id === chatId ? { ...c, pinned: Boolean(res.pinned) } : c))
       );
     } catch (err) {
-      // Revert state if backend request fails
-      setChats((prev) =>
-        prev.map((c) => (c.id === chatId ? { ...c, pinned: !c.pinned } : c))
-      );
+      // Revert on failure
+      setChats(previousChats);
       alert('Failed to pin/unpin chat: ' + (err.detail || 'Unknown error'));
     }
   };

@@ -148,7 +148,7 @@
 
 /* ── Analysis Cards ── */
 .analysis-card {
-  background: #111216;
+  background: #1c1d21;
   border: 1px solid rgba(255, 255, 255, 0.04);
   border-radius: 12px;
   padding: 1.3rem;
@@ -179,7 +179,7 @@
 }
 
 .analysis-card--summary {
-  background: linear-gradient(135deg, rgba(201, 168, 76, 0.02) 0%, #111216 100%);
+  background: linear-gradient(135deg, rgba(201, 168, 76, 0.02) 0%, #1c1d21 100%);
   border-color: rgba(201, 168, 76, 0.08);
 }
 

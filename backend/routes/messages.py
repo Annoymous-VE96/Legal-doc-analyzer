@@ -9,6 +9,9 @@ from auth.dependencies import get_current_user
 from core.crag import CRAGPipeline
 from core.storage import get_public_url
 import asyncio
+import json
+import queue
+import threading
 
 router = APIRouter()
 
@@ -45,14 +48,50 @@ async def send_message(
             chat_id=chat_id
         )
     )
-    crag_result = await loop.run_in_executor(None, crag_pipeline.run, query.content, chat_history)
-
-    refined_context = crag_result.get('refined_context', '')
-    verdict = crag_result.get('verdict', 'CORRECT')
 
     full_answer = []
 
     async def stream_response():
+        event_queue = queue.Queue()
+        SENTINEL = object()
+
+        def worker():
+            try:
+                def callback(label: str):
+                    event_queue.put({"type": "status", "label": label})
+
+                result = crag_pipeline.run(query.content, chat_history, status_callback=callback)
+                event_queue.put({"type": "result", "data": result})
+            except Exception as e:
+                event_queue.put({"type": "error", "error": str(e)})
+            finally:
+                event_queue.put(SENTINEL)
+
+        thread = threading.Thread(target=worker, daemon=True)
+        thread.start()
+
+        crag_result = None
+        while True:
+            item = await loop.run_in_executor(None, event_queue.get)
+            if item is SENTINEL:
+                break
+
+            if item["type"] == "status":
+                payload = json.dumps({"type": "status", "label": item["label"]})
+                yield f"data: {payload}\n\n"
+            elif item["type"] == "result":
+                crag_result = item["data"]
+            elif item["type"] == "error":
+                print("Pipeline error:", item["error"])
+
+        thread.join()
+
+        if not crag_result:
+            crag_result = {}
+
+        refined_context = crag_result.get('refined_context', '')
+        verdict = crag_result.get('verdict', 'CORRECT')
+
         prompt_msgs = crag_pipeline.answer_prompt.format_messages(
             question=query.content,
             refined_context=refined_context,
@@ -63,8 +102,9 @@ async def send_message(
         async for chunk in crag_pipeline.llm.astream(prompt_msgs):
             if chunk.content:
                 full_answer.append(chunk.content)
-                yield f"data: {chunk.content}\n\n"
-                # await asyncio.sleep(0.02)
+                payload = json.dumps({"type": "token", "content": chunk.content})
+                yield f"data: {payload}\n\n"
+                await asyncio.sleep(0.02)
 
         complete = "".join(full_answer)
         ai_msg = Messages(chat_id=chat_id, role='AI', content=complete)
