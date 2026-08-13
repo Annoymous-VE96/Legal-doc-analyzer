@@ -13,6 +13,7 @@ function AuthPage() {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const m = new URLSearchParams(location.search).get('mode');
@@ -20,10 +21,14 @@ function AuthPage() {
   }, [location.search]);
 
   const handleSubmit = async () => {
+    if (loading) return;
     setMessage('');
+    setLoading(true);
+
+    const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
     const url = mode === 'login'
-      ? `${process.env.REACT_APP_API_URL}/login`
-      : `${process.env.REACT_APP_API_URL}/register`;
+      ? `${BASE_URL}/login`
+      : `${BASE_URL}/register`;
 
     const body = mode === 'login'
       ? { email, password }
@@ -46,6 +51,14 @@ function AuthPage() {
       }
     } catch (err) {
       setMessage('Cannot connect to server. Make sure the backend is running.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSubmit();
     }
   };
 
@@ -54,37 +67,34 @@ function AuthPage() {
       <div className="auth-card">
 
         {/* Logo */}
-        <div className="auth-logo">⚖️ LexAI</div>
-
-        {/* Toggle */}
-        <div className="auth-toggle">
-          <button
-            className={mode === 'login' ? 'auth-tab auth-tab--active' : 'auth-tab auth-tab--inactive'}
-            onClick={() => setMode('login')}
-          >
-            Login
-          </button>
-          <button
-            className={mode === 'signup' ? 'auth-tab auth-tab--active' : 'auth-tab auth-tab--inactive'}
-            onClick={() => setMode('signup')}
-          >
-            Sign Up
-          </button>
+        <div className="auth-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
+          ⚖️ LexAI
         </div>
+
+        {/* Header Title */}
+        <h2 className="auth-header-title">
+          {mode === 'login' ? 'Sign In' : 'Create Account'}
+        </h2>
 
         {/* Fields */}
         {mode === 'signup' && (
           <input
             className="auth-input"
             placeholder="Full Name"
+            value={name}
             onChange={(e) => setName(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={loading}
           />
         )}
         <input
           className="auth-input"
           type="email"
           placeholder="Email"
+          value={email}
           onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={loading}
         />
 
         {/* Password field with show/hide toggle */}
@@ -93,7 +103,10 @@ function AuthPage() {
             className="auth-password-input"
             type={showPassword ? 'text' : 'password'}
             placeholder="At least 6 characters"
+            value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={loading}
           />
           <span
             className="auth-eye-btn"
@@ -105,15 +118,27 @@ function AuthPage() {
 
         {message && <p className="auth-message">{message}</p>}
 
-        <button className="auth-btn" onClick={handleSubmit}>
-          {mode === 'login' ? 'Sign In →' : 'Create Account →'}
+        <button className="auth-btn" onClick={handleSubmit} disabled={loading}>
+          {loading ? (
+            <span className="auth-loading-wrap">
+              <span className="auth-spinner"></span>
+              {mode === 'login' ? 'Signing in...' : 'Creating account...'}
+            </span>
+          ) : (
+            mode === 'login' ? 'Sign In →' : 'Create Account →'
+          )}
         </button>
 
         <p className="auth-switch-text">
           {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
           <span
             className="auth-switch-link"
-            onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+            onClick={() => {
+              if (!loading) {
+                setMode(mode === 'login' ? 'signup' : 'login');
+                setMessage('');
+              }
+            }}
           >
             {mode === 'login' ? 'Sign Up' : 'Login'}
           </span>
