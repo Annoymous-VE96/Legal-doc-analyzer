@@ -97,22 +97,23 @@ async def delete_chat(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session)
 ):
-    
-    result = await db.execute(select(Chat).where(Chat.id == chat_id))
+    result = await db.execute(select(Chat).where(Chat.id == chat_id, Chat.user_id == current_user.id))
     chat = result.scalar_one_or_none()
     if not chat:
         raise HTTPException(status_code=404, detail='Chat not found')
     
-    # Delete the file from Supabase
-    key = chat.pdf_path
-    delete_file(key)
+    # Try deleting the file from Supabase (safe wrapper)
+    if chat.pdf_path:
+        try:
+            delete_file(chat.pdf_path)
+        except Exception as e:
+            print(f"Supabase delete file warning: {e}")
 
-    # Delete Chat + embeddings + messages
+    # Delete related records then Chat
     await db.execute(delete(Messages).where(Messages.chat_id == chat_id))
     await db.execute(delete(Chunk).where(Chunk.chat_id == chat_id))
     await db.execute(delete(Analysis).where(Analysis.chat_id == chat_id))
     await db.execute(delete(Chat).where(Chat.id == chat_id))
-    await db.delete(chat)
     await db.commit()
 
     return {'message': 'Chat deleted'}
@@ -123,21 +124,24 @@ async def delete_all_chat(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session)
 ) -> dict[str, str]:
-    
     chats = await db.execute(select(Chat).where(Chat.user_id == current_user.id))
     chats = chats.scalars().all()
     chat_ids = [chat.id for chat in chats]
 
-    # Delete a folder from supabase 
-    prefix = str(current_user.id)
-    delete_folder(prefix)
+    # Try deleting the user folder from supabase
+    try:
+        prefix = str(current_user.id)
+        delete_folder(prefix)
+    except Exception as e:
+        print(f"Supabase delete folder warning: {e}")
 
-    # Delete Chat + Messages + Chunk
-    await db.execute(delete(Chunk).where(Chunk.chat_id.in_(chat_ids)))
-    await db.execute(delete(Messages).where(Messages.chat_id.in_(chat_ids)))
-    await db.execute(delete(Analysis).where(Analysis.chat_id.in_(chat_ids)))
-    await db.execute(delete(Chat).where(Chat.user_id == current_user.id))
-    await db.commit()
+    # Delete Chat + Messages + Chunk + Analysis
+    if chat_ids:
+        await db.execute(delete(Chunk).where(Chunk.chat_id.in_(chat_ids)))
+        await db.execute(delete(Messages).where(Messages.chat_id.in_(chat_ids)))
+        await db.execute(delete(Analysis).where(Analysis.chat_id.in_(chat_ids)))
+        await db.execute(delete(Chat).where(Chat.user_id == current_user.id))
+        await db.commit()
 
     return {'message': 'All chats deleted'}
 
