@@ -83,8 +83,15 @@ async def send_message(
                 crag_result = item["data"]
             elif item["type"] == "error":
                 print("Pipeline error:", item["error"])
+                err_payload = json.dumps({"type": "token", "content": f"\n\n⚠️ **Error:** {item['error']}"})
+                yield f"data: {err_payload}\n\n"
+                break
 
         thread.join()
+
+        if item["type"] == "error":
+            yield "data: [DONE]\n\n"
+            return
 
         if not crag_result:
             crag_result = {}
