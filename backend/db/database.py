@@ -2,8 +2,10 @@ from collections.abc import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from db.models import Base
 from dotenv import load_dotenv
+from pathlib import Path
 import os
 
+load_dotenv(Path(__file__).resolve().parent.parent / ".env", override=True)
 load_dotenv()
 
 DATABASE_URL = os.environ["DATABASE_URL"]
