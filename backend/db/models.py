@@ -53,4 +53,4 @@ class Chunk(Base):
     chat_id: Mapped[int] = mapped_column(Integer, ForeignKey('Chat.id'), nullable=False)
     content: Mapped[str] = mapped_column(String, nullable=False)
     page: Mapped[int] = mapped_column(Integer, nullable=True)
-    embedding: Mapped[list] = mapped_column(Vector(384))  # MiniLM = 384 dims
+    embedding: Mapped[list] = mapped_column(Vector(1024))  # Voyage-code-large-1024 = 1024 dims

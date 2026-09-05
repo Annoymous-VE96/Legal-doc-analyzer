@@ -3,27 +3,49 @@ from __future__ import annotations
 import os
 import re
 import tempfile
-from typing import List, TypedDict, Annotated, Optional
+from typing import List, TypedDict, Annotated, Optional, Callable
 from operator import add
 
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from typing import List, TypedDict, Annotated, Optional, Callable
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_tavily import TavilySearch
 from langgraph.graph import StateGraph, START, END
 from sqlalchemy import create_engine, text
-
 from pathlib import Path
 
 load_dotenv(Path(__file__).parent.parent / ".env", override=True)
 
-_embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+# ─────────────────────────────────────────────────────────────────────────────
+# API-Based Embeddings Initialization
+# ─────────────────────────────────────────────────────────────────────────────
+# Uses remote API calls instead of downloading and running PyTorch model weights locally.
+# Prioritizes Voyage AI (optimized for retrieval & legal texts, key in your .env),
+# then OpenAI, or Hugging Face Serverless Inference API as fallback.
+voyage_key = os.getenv("VOYAGE_AI_KEY") or os.getenv("VOYAGE_API_KEY") or os.getenv("VOYAGE_AI")
+
+if voyage_key:
+    from langchain_voyageai import VoyageAIEmbeddings
+    _embeddings = VoyageAIEmbeddings(
+        voyage_api_key=voyage_key,
+        model="voyage-law-2"
+    )
+elif os.getenv("OPENAI_API_KEY"):
+    from langchain_openai import OpenAIEmbeddings
+    _embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+else:
+    # Remote Hugging Face Inference API fallback (no local model weights loaded)
+    from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
+    hf_token = os.getenv("HUGGINGFACEHUB_API_TOKEN") or os.getenv("HF_TOKEN")
+    _embeddings = HuggingFaceInferenceAPIEmbeddings(
+        api_key=hf_token,
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    )
+
 sync_engine = create_engine(
     os.environ["DATABASE_URL"]
     .replace("+asyncpg", "")
@@ -107,6 +129,7 @@ class CRAGPipeline:
     def _emit_status(self, label: str) -> None:
         if self._status_callback:
             self._status_callback(label)
+
     # ─────────────────────────────────────────
     # Supabase download (only used if chunks missing)
     # ─────────────────────────────────────────
@@ -135,12 +158,18 @@ class CRAGPipeline:
         return self.chunks
 
     # ─────────────────────────────────────────
-    # pgvector storage
+    # pgvector storage (fast API-based batch embedding)
     # ─────────────────────────────────────────
     def build_vector_store(self) -> None:
+        if not self.chunks:
+            return
+
+        texts = [chunk.page_content for chunk in self.chunks]
+        # Fast API-based batch embedding call
+        embeddings_list = self.embeddings.embed_documents(texts)
+
         with sync_engine.connect() as conn:
-            for chunk in self.chunks:
-                emb = self.embeddings.embed_query(chunk.page_content)
+            for chunk, emb in zip(self.chunks, embeddings_list):
                 conn.execute(
                     text("""
                         INSERT INTO "Chunk" (chat_id, content, page, embedding)
