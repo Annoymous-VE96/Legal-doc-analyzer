@@ -19,6 +19,7 @@ export default function ChatPanel({ messages, input, loading, onInputChange, onS
 
   useEffect(() => {
     setAnalysis(null);
+    if (!chatId || String(chatId).startsWith('temp_')) return;
     getAnalysis(chatId).then(setAnalysis).catch(() => {});
   }, [chatId]);
 
@@ -39,6 +40,10 @@ export default function ChatPanel({ messages, input, loading, onInputChange, onS
   };
 
   const handleAnalyze = async () => {
+    if (!chatId || String(chatId).startsWith('temp_')) {
+      alert('Please wait for the document to finish uploading first.');
+      return;
+    }
     setAnalyzing(true);
     try {
       const result = await analyzeDocument(chatId);

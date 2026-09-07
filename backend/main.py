@@ -19,7 +19,17 @@ async def lifespan(app: FastAPI):
 
 import os
 
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+
 app = FastAPI(lifespan=lifespan)
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal Server Error: {str(exc)}"},
+    )
 
 uploads_dir = Path(__file__).resolve().parent / "uploads"
 uploads_dir.mkdir(parents=True, exist_ok=True)
@@ -31,6 +41,7 @@ app.add_middleware(
         'https://lexaifrontend-six.vercel.app',
         'http://localhost:3000'
     ],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*']

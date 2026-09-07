@@ -41,7 +41,13 @@ async def upload_chat(
     # Upload file bytes to Supabase Storage
     content = await file.read()
     key = f'{current_user.id}/{file.filename}'
-    upload_file(content, key)
+    try:
+        upload_file(content, key)
+    except Exception as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Storage upload error (Supabase unreachable or misconfigured): {str(e)}"
+        )
 
     # Create new Chat DB record
     new_chat = Chat(user_id=current_user.id, name=file.filename, pdf_path=key)

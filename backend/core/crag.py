@@ -96,7 +96,7 @@ class CRAGPipeline:
         chunk_overlap: int = 100,
         upper_th: float = 0.7,
         lower_th: float = 0.3,
-        llm_model: str = "llama-3.3-70b-versatile",
+        llm_model: str = "openai/gpt-oss-120b",
         temperature: float = 0.2,
     ):
         self.pdf_path = pdf_path  # local path OR supabase key — resolved lazily
@@ -165,8 +165,16 @@ class CRAGPipeline:
             return
 
         texts = [chunk.page_content for chunk in self.chunks]
-        # Fast API-based batch embedding call
-        embeddings_list = self.embeddings.embed_documents(texts)
+        # Batch API-based embeddings (20 chunks per batch to respect TPM limits on free tier)
+        batch_size = 20
+        embeddings_list = []
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i: i + batch_size]
+            embs = self.embeddings.embed_documents(batch)
+            embeddings_list.extend(embs)
+            if i + batch_size < len(texts):
+                import time
+                time.sleep(20)
 
         with sync_engine.connect() as conn:
             for chunk, emb in zip(self.chunks, embeddings_list):
