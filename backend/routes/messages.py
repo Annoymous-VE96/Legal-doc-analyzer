@@ -71,6 +71,7 @@ async def send_message(
         thread.start()
 
         crag_result = None
+        has_error = False
         while True:
             item = await loop.run_in_executor(None, event_queue.get)
             if item is SENTINEL:
@@ -85,11 +86,12 @@ async def send_message(
                 print("Pipeline error:", item["error"])
                 err_payload = json.dumps({"type": "token", "content": f"\n\n⚠️ **Error:** {item['error']}"})
                 yield f"data: {err_payload}\n\n"
+                has_error = True
                 break
 
         thread.join()
 
-        if item["type"] == "error":
+        if has_error:
             yield "data: [DONE]\n\n"
             return
 
@@ -99,24 +101,29 @@ async def send_message(
         refined_context = crag_result.get('refined_context', '')
         verdict = crag_result.get('verdict', 'CORRECT')
 
-        prompt_msgs = crag_pipeline.answer_prompt.format_messages(
-            question=query.content,
-            refined_context=refined_context,
-            verdict=verdict,
-            chat_history=chat_history
-        )
+        try:
+            prompt_msgs = crag_pipeline.answer_prompt.format_messages(
+                question=query.content,
+                refined_context=refined_context,
+                verdict=verdict,
+                chat_history=chat_history
+            )
 
-        async for chunk in crag_pipeline.llm.astream(prompt_msgs):
-            if chunk.content:
-                full_answer.append(chunk.content)
-                payload = json.dumps({"type": "token", "content": chunk.content})
-                yield f"data: {payload}\n\n"
-                await asyncio.sleep(0.02)
+            async for chunk in crag_pipeline.llm.astream(prompt_msgs):
+                if chunk.content:
+                    full_answer.append(chunk.content)
+                    payload = json.dumps({"type": "token", "content": chunk.content})
+                    yield f"data: {payload}\n\n"
 
-        complete = "".join(full_answer)
-        ai_msg = Messages(chat_id=chat_id, role='AI', content=complete)
-        db.add(ai_msg)
-        await db.commit()
+            complete = "".join(full_answer)
+            ai_msg = Messages(chat_id=chat_id, role='AI', content=complete)
+            db.add(ai_msg)
+            await db.commit()
+        except Exception as e:
+            print("Generation stream error:", e)
+            err_payload = json.dumps({"type": "token", "content": f"\n\n⚠️ **Generation Error:** {str(e)}"})
+            yield f"data: {err_payload}\n\n"
+
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(

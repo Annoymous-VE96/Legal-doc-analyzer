@@ -110,8 +110,20 @@ class CRAGPipeline:
             chunk_size=chunk_size, chunk_overlap=chunk_overlap
         )
         self.embeddings = _embeddings
-        self.llm = ChatGroq(model=llm_model, temperature=temperature, streaming=True)
-        self.structured_llm = ChatGroq(model=llm_model, temperature=temperature, streaming=False)
+        self.llm = ChatGroq(
+            model=llm_model, 
+            temperature=temperature, 
+            streaming=True,
+            reasoning_format="hidden",
+            reasoning_effort="low"
+        )
+        self.structured_llm = ChatGroq(
+            model=llm_model, 
+            temperature=temperature, 
+            streaming=False,
+            reasoning_format="hidden",
+            reasoning_effort="low"
+        )
         self.tavily = TavilySearch(max_results=10)
 
         self.docs: List[Document] = []
