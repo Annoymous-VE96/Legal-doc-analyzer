@@ -7,7 +7,7 @@ import PDFViewer from '../components/PDFViewer';
 import ChatPanel from '../components/ChatPanel';
 import './ChatPage.css';
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const BASE_URL = (process.env.REACT_APP_API_URL || 'http://localhost:8000').trim();
 
 export default function ChatPage() {
   const navigate = useNavigate();

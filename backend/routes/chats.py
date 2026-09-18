@@ -196,9 +196,14 @@ async def analyze_chat(
     chunks_exist = chunks_exist.scalar()
     loop = asyncio.get_running_loop()
     pipeline = await loop.run_in_executor(
-            None,
-            lambda: CRAGPipeline(pdf_path=chat_row.pdf_path, filename=chat_row.name, chat_id=chat_id)
+        None,
+        lambda: CRAGPipeline(
+            pdf_path=chat_row.pdf_path,
+            filename=chat_row.name,
+            chat_id=chat_id,
+            prepare_kb=False
         )
+    )
 
     result = await loop.run_in_executor(None, pipeline.analyze_document)
 

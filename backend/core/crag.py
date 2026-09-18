@@ -96,8 +96,9 @@ class CRAGPipeline:
         chunk_overlap: int = 100,
         upper_th: float = 0.7,
         lower_th: float = 0.3,
-        llm_model: str = "openai/gpt-oss-120b",
+        llm_model: str = "qwen/qwen3.8-27b",
         temperature: float = 0.2,
+        prepare_kb: bool = True,
     ):
         self.pdf_path = pdf_path  # local path OR supabase key — resolved lazily
         self.filename = filename
@@ -113,16 +114,12 @@ class CRAGPipeline:
         self.llm = ChatGroq(
             model=llm_model, 
             temperature=temperature, 
-            streaming=True,
-            reasoning_format="hidden",
-            reasoning_effort="low"
+            streaming=True
         )
         self.structured_llm = ChatGroq(
             model=llm_model, 
             temperature=temperature, 
-            streaming=False,
-            reasoning_format="hidden",
-            reasoning_effort="low"
+            streaming=False
         )
         self.tavily = TavilySearch(max_results=10)
 
@@ -134,7 +131,8 @@ class CRAGPipeline:
         self.rewrite_chain  = self._build_rewrite_chain()
         self.answer_chain   = self._build_answer_chain()
 
-        self._prepare_knowledge_base()
+        if prepare_kb:
+            self._prepare_knowledge_base()
 
         self.app = self._build_graph()
 
@@ -180,12 +178,24 @@ class CRAGPipeline:
         # Batch API-based embeddings (20 chunks per batch to respect TPM limits on free tier)
         batch_size = 20
         embeddings_list = []
+        import time
+
         for i in range(0, len(texts), batch_size):
             batch = texts[i: i + batch_size]
-            embs = self.embeddings.embed_documents(batch)
+            max_retries = 3
+            embs = None
+            for attempt in range(max_retries):
+                try:
+                    embs = self.embeddings.embed_documents(batch)
+                    break
+                except Exception as e:
+                    err_msg = str(e).lower()
+                    if ("ratelimit" in err_msg or "rate limit" in err_msg or "429" in err_msg) and attempt < max_retries - 1:
+                        time.sleep(25)
+                        continue
+                    raise e
             embeddings_list.extend(embs)
             if i + batch_size < len(texts):
-                import time
                 time.sleep(20)
 
         with sync_engine.connect() as conn:
@@ -262,8 +272,7 @@ class CRAGPipeline:
              "You will be given MULTIPLE retrieved chunks and a question.\n"
              "For EACH chunk, return its chunk_index (0-based), a relevance score in [0,1], and a short reason.\n"
              "1 = highly relevant, 0 = irrelevant.\n"
-             "You MUST return a score for every chunk provided.\n"
-             "Return ONLY valid JSON. Do not include markdown or explanations."),
+             "You MUST return a score for every chunk provided."),
             ("human", "Question: {question}\n\nChunks:\n{chunks}")
         ])
         return prompt | self.structured_llm.with_structured_output(BatchDocsEvalScore, method="function_calling")
@@ -275,8 +284,7 @@ class CRAGPipeline:
              "You will be given MULTIPLE numbered sentences and a question.\n"
              "For EACH sentence, return its sentence_index (0-based) and keep=true "
              "if it helps answer the question (directly or as supporting context).\n"
-             "You MUST return a verdict for every sentence.\n"
-             "Return ONLY valid JSON. Do not include markdown or explanations."),
+             "You MUST return a verdict for every sentence."),
             ("human", "Question: {question}\n\nSentences:\n{sentences}")
         ])
         return prompt | self.structured_llm.with_structured_output(BatchKeepOrDrop, method="function_calling")
@@ -286,8 +294,7 @@ class CRAGPipeline:
             ("system",
              "You are a search query optimizer for legal document questions.\n"
              "Rewrite the question into a concise, legal-domain search query.\n"
-             "Never generate queries about document structure or page layout.\n"
-             "Return ONLY valid JSON. Do not include markdown or explanations."),
+             "Never generate queries about document structure or page layout."),
             ("human", "Question: {question}")
         ])
         return prompt | self.structured_llm.with_structured_output(WebQuery, method="function_calling")
@@ -326,13 +333,12 @@ class CRAGPipeline:
         from db.schemas import AnalysisResult
         prompt = ChatPromptTemplate.from_messages([
             ("system",
-             "You are a legal document analyzer.\n"
-             "Given the full document text, extract:\n"
-             "1. clauses: key clauses with a short title and the clause text\n"
-             "2. risks: risky/unusual clauses, each with the clause name, reason, and severity (High/Medium/Low)\n"
-             "3. summary: a 3-line plain-English summary\n"
-             "4. improvements: a list of suggested improvements/negotiation points\n"
-             "Return ONLY valid JSON matching the schema."),
+             "You are a senior legal document analyzer.\n"
+             "Analyze the document and extract the most critical insights:\n"
+             "1. clauses: 4 to 6 of the most critical legal clauses (each with a concise title and brief 1-2 sentence summary of the clause)\n"
+             "2. risks: 3 to 5 key risks or unusual terms (clause name, reason, severity: High/Medium/Low)\n"
+             "3. summary: a clear 3-line plain-English summary\n"
+             "4. improvements: 3 to 5 concrete negotiation points or recommendations."),
             ("human", "Document:\n{document_text}")
         ])
         return prompt | self.structured_llm.with_structured_output(AnalysisResult, method="function_calling")
@@ -343,7 +349,26 @@ class CRAGPipeline:
                 text('SELECT content FROM "Chunk" WHERE chat_id = :chat_id'),
                 {"chat_id": self.chat_id}
             ).fetchall()
-        full_text = "\n\n".join(r[0] for r in rows)[:15000]
+
+        if rows:
+            full_text = "\n\n".join(r[0] for r in rows)[:15000]
+        else:
+            # Chunks not in DB yet (e.g. background embeddings in progress)
+            # Read text directly from PDF without waiting for or colliding with vector embeddings
+            local_path = self.pdf_path
+            downloaded = False
+            if not os.path.exists(local_path):
+                local_path = self._download_pdf()
+                downloaded = True
+
+            docs = self.load_documents(local_path)
+            full_text = "\n\n".join(d.page_content for d in docs)[:15000]
+            if downloaded:
+                try:
+                    os.remove(local_path)
+                except Exception:
+                    pass
+
         chain = self._build_analysis_chain()
         return chain.invoke({"document_text": full_text})
 
